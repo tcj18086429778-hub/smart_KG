@@ -1,0 +1,2 @@
+id,name,project_id,start_site_id,end_site_id,length_km,voltage_level
+line_segment:demo:A:B,A-B线路段,project:demo,tower_site:demo:A,tower_site:demo:B,1.25,10kV

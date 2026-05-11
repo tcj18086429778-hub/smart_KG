@@ -1,0 +1,9 @@
+{
+  "project": "project:{project_code}",
+  "tower_site": "tower_site:{project_code}:{site_code}",
+  "line_segment": "line_segment:{project_code}:{start_site}:{end_site}",
+  "feature": "feature:{source}:{feature_code}",
+  "rule": "rule:{source}:{rule_code}",
+  "cost_rule": "cost_rule:{category}:{voltage}:{feature_code}:{level}",
+  "base_cost": "base_cost:{voltage}:{circuit_type}"
+}

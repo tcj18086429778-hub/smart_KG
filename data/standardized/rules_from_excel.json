@@ -1,0 +1,3996 @@
+[
+  {
+    "rule_id": "rule:base:0001",
+    "rule_name": "禁止穿越保护区",
+    "calc_mode": "FORBIDDEN",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_TYPE_CODE='1100'",
+    "match_condition_json": {
+      "field": "feature_type_code",
+      "operator": "eq",
+      "value": "1100"
+    },
+    "effect_value": null,
+    "effect_value_status": "NULL",
+    "effect_attr": null,
+    "effect_unit": null,
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 3,
+    "enabled": true
+  },
+  {
+    "rule_id": "rule:base:0002",
+    "rule_name": "禁止穿越景观环境",
+    "calc_mode": "FORBIDDEN",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_TYPE_CODE='1100' && S_LEVEL in ('二级','自然环境','','','')",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "feature_type_code",
+          "operator": "eq",
+          "value": "1100"
+        },
+        {
+          "field": "feature_level",
+          "operator": "in",
+          "value": [
+            "二级",
+            "自然环境",
+            null,
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "effect_value": null,
+    "effect_value_status": "NULL",
+    "effect_attr": null,
+    "effect_unit": null,
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 4,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:0003",
+    "rule_name": "穿越景观环境",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_TYPE_CODE='1100' && S_LEVEL not in ('二级','自然环境','','','')",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "feature_type_code",
+          "operator": "eq",
+          "value": "1100"
+        },
+        {
+          "field": "feature_level",
+          "operator": "not_in",
+          "value": [
+            "二级",
+            "自然环境",
+            null,
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "effect_value": -1,
+    "effect_value_status": "NEGOTIABLE",
+    "effect_attr": "S_AREA",
+    "effect_unit": "万元/亩",
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 5,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:0004",
+    "rule_name": "穿越非基本农田",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='1302' &&S_LEVEL in ('非基本')",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "1302"
+        },
+        {
+          "field": "feature_level",
+          "operator": "in",
+          "value": [
+            "非基本"
+          ]
+        }
+      ]
+    },
+    "effect_value": 0.006,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_AREA",
+    "effect_unit": "万元/亩",
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 6,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:0005",
+    "rule_name": "穿越基本农田",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='1302' &&S_LEVEL in ('基本')",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "1302"
+        },
+        {
+          "field": "feature_level",
+          "operator": "in",
+          "value": [
+            "基本"
+          ]
+        }
+      ]
+    },
+    "effect_value": 0.012,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_AREA",
+    "effect_unit": "万元/亩",
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 7,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:0006",
+    "rule_name": "穿越一级林地",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='1303' &&S_LEVEL in ('一级')",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "1303"
+        },
+        {
+          "field": "feature_level",
+          "operator": "in",
+          "value": [
+            "一级"
+          ]
+        }
+      ]
+    },
+    "effect_value": 0.003,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_AREA",
+    "effect_unit": "万元/亩",
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 8,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:0007",
+    "rule_name": "穿越其他林地",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='1303' &&S_LEVEL not in ('一级')",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "1303"
+        },
+        {
+          "field": "feature_level",
+          "operator": "not_in",
+          "value": [
+            "一级"
+          ]
+        }
+      ]
+    },
+    "effect_value": 0.0015,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_AREA",
+    "effect_unit": "万元/亩",
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 9,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:0008",
+    "rule_name": "穿越草原",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='1304'",
+    "match_condition_json": {
+      "field": "feature_subtype_code",
+      "operator": "eq",
+      "value": "1304"
+    },
+    "effect_value": 0.0003,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_AREA",
+    "effect_unit": "万元/亩",
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 10,
+    "enabled": true
+  },
+  {
+    "rule_id": "rule:base:0009",
+    "rule_name": "禁止穿越湖泊湿地",
+    "calc_mode": "FORBIDDEN",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='2003'",
+    "match_condition_json": {
+      "field": "feature_subtype_code",
+      "operator": "eq",
+      "value": "2003"
+    },
+    "effect_value": null,
+    "effect_value_status": "NULL",
+    "effect_attr": null,
+    "effect_unit": null,
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 11,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:0010",
+    "rule_name": "穿越水库",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='2002'",
+    "match_condition_json": {
+      "field": "feature_subtype_code",
+      "operator": "eq",
+      "value": "2002"
+    },
+    "effect_value": -1,
+    "effect_value_status": "NEGOTIABLE",
+    "effect_attr": "S_COUNT",
+    "effect_unit": "万元/处",
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 12,
+    "enabled": true
+  },
+  {
+    "rule_id": "rule:base:0011",
+    "rule_name": "禁止穿越滑坡",
+    "calc_mode": "FORBIDDEN",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='2201'",
+    "match_condition_json": {
+      "field": "feature_subtype_code",
+      "operator": "eq",
+      "value": "2201"
+    },
+    "effect_value": null,
+    "effect_value_status": "NULL",
+    "effect_attr": null,
+    "effect_unit": null,
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 13,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:0012",
+    "rule_name": "鱼塘赔偿",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='2601'",
+    "match_condition_json": {
+      "field": "feature_subtype_code",
+      "operator": "eq",
+      "value": "2601"
+    },
+    "effect_value": 2.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_COUNT",
+    "effect_unit": "万元/处",
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 14,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:0013",
+    "rule_name": "民房赔偿",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='2602'",
+    "match_condition_json": {
+      "field": "feature_subtype_code",
+      "operator": "eq",
+      "value": "2602"
+    },
+    "effect_value": 400.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_COUNT",
+    "effect_unit": "万元/处",
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 15,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:0014",
+    "rule_name": "厂房赔偿",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='2603'",
+    "match_condition_json": {
+      "field": "feature_subtype_code",
+      "operator": "eq",
+      "value": "2603"
+    },
+    "effect_value": -1,
+    "effect_value_status": "NEGOTIABLE",
+    "effect_attr": "S_COUNT",
+    "effect_unit": "万元/处",
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 16,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:0015",
+    "rule_name": "大棚赔偿",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='2604'",
+    "match_condition_json": {
+      "field": "feature_subtype_code",
+      "operator": "eq",
+      "value": "2604"
+    },
+    "effect_value": 0.05,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_AREA",
+    "effect_unit": "万元/亩",
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 17,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:0016",
+    "rule_name": "乔木林赔偿",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='2605'",
+    "match_condition_json": {
+      "field": "feature_subtype_code",
+      "operator": "eq",
+      "value": "2605"
+    },
+    "effect_value": 0.11,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_COUNT",
+    "effect_unit": "万元/处",
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 18,
+    "enabled": true
+  },
+  {
+    "rule_id": "rule:base:0017",
+    "rule_name": "禁止穿越人文环境",
+    "calc_mode": "FORBIDDEN",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_TYPE_CODE='2400'",
+    "match_condition_json": {
+      "field": "feature_type_code",
+      "operator": "eq",
+      "value": "2400"
+    },
+    "effect_value": null,
+    "effect_value_status": "NULL",
+    "effect_attr": null,
+    "effect_unit": null,
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 19,
+    "enabled": true
+  },
+  {
+    "rule_id": "rule:base:0018",
+    "rule_name": "禁止穿越人口聚集区",
+    "calc_mode": "FORBIDDEN",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_TYPE_CODE='2500'",
+    "match_condition_json": {
+      "field": "feature_type_code",
+      "operator": "eq",
+      "value": "2500"
+    },
+    "effect_value": null,
+    "effect_value_status": "NULL",
+    "effect_attr": null,
+    "effect_unit": null,
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 20,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:0019",
+    "rule_name": "穿越化学工业区",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='1602'",
+    "match_condition_json": {
+      "field": "feature_subtype_code",
+      "operator": "eq",
+      "value": "1602"
+    },
+    "effect_value": -1,
+    "effect_value_status": "NEGOTIABLE",
+    "effect_attr": "S_COUNT",
+    "effect_unit": "万元/处",
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 21,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:0020",
+    "rule_name": "穿越煤炭矿区",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='1502'",
+    "match_condition_json": {
+      "field": "feature_subtype_code",
+      "operator": "eq",
+      "value": "1502"
+    },
+    "effect_value": -1,
+    "effect_value_status": "NEGOTIABLE",
+    "effect_attr": "S_COUNT",
+    "effect_unit": "万元/处",
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 22,
+    "enabled": true
+  },
+  {
+    "rule_id": "rule:base:0021",
+    "rule_name": "禁止穿越规划区",
+    "calc_mode": "FORBIDDEN",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_TYPE_CODE='1400'",
+    "match_condition_json": {
+      "field": "feature_type_code",
+      "operator": "eq",
+      "value": "1400"
+    },
+    "effect_value": null,
+    "effect_value_status": "NULL",
+    "effect_attr": null,
+    "effect_unit": null,
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 23,
+    "enabled": true
+  },
+  {
+    "rule_id": "rule:base:0022",
+    "rule_name": "禁止穿越地磁环境区",
+    "calc_mode": "FORBIDDEN",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_TYPE_CODE='2100'",
+    "match_condition_json": {
+      "field": "feature_type_code",
+      "operator": "eq",
+      "value": "2100"
+    },
+    "effect_value": null,
+    "effect_value_status": "NULL",
+    "effect_attr": null,
+    "effect_unit": null,
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 24,
+    "enabled": true
+  },
+  {
+    "rule_id": "rule:base:0023",
+    "rule_name": "禁止穿越防火防爆区",
+    "calc_mode": "FORBIDDEN",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_TYPE_CODE='1700'",
+    "match_condition_json": {
+      "field": "feature_type_code",
+      "operator": "eq",
+      "value": "1700"
+    },
+    "effect_value": null,
+    "effect_value_status": "NULL",
+    "effect_attr": null,
+    "effect_unit": null,
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 25,
+    "enabled": true
+  },
+  {
+    "rule_id": "rule:base:0024",
+    "rule_name": "禁止穿越能源设施",
+    "calc_mode": "FORBIDDEN",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_TYPE_CODE='1900'",
+    "match_condition_json": {
+      "field": "feature_type_code",
+      "operator": "eq",
+      "value": "1900"
+    },
+    "effect_value": null,
+    "effect_value_status": "NULL",
+    "effect_attr": null,
+    "effect_unit": null,
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 26,
+    "enabled": true
+  },
+  {
+    "rule_id": "rule:base:0025",
+    "rule_name": "禁止穿越冰川裂隙",
+    "calc_mode": "FORBIDDEN",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='2302'",
+    "match_condition_json": {
+      "field": "feature_subtype_code",
+      "operator": "eq",
+      "value": "2302"
+    },
+    "effect_value": null,
+    "effect_value_status": "NULL",
+    "effect_attr": null,
+    "effect_unit": null,
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 27,
+    "enabled": true
+  },
+  {
+    "rule_id": "rule:base:0026",
+    "rule_name": "禁止穿越雪崩范围",
+    "calc_mode": "FORBIDDEN",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='2303'",
+    "match_condition_json": {
+      "field": "feature_subtype_code",
+      "operator": "eq",
+      "value": "2303"
+    },
+    "effect_value": null,
+    "effect_value_status": "NULL",
+    "effect_attr": null,
+    "effect_unit": null,
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 28,
+    "enabled": true
+  },
+  {
+    "rule_id": "rule:base:0027",
+    "rule_name": "禁止穿越交通设施",
+    "calc_mode": "FORBIDDEN",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_TYPE_CODE='1800'",
+    "match_condition_json": {
+      "field": "feature_type_code",
+      "operator": "eq",
+      "value": "1800"
+    },
+    "effect_value": null,
+    "effect_value_status": "NULL",
+    "effect_attr": null,
+    "effect_unit": null,
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 29,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:0028",
+    "rule_name": "穿越其他区域",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_TYPE_CODE='3200'",
+    "match_condition_json": {
+      "field": "feature_type_code",
+      "operator": "eq",
+      "value": "3200"
+    },
+    "effect_value": -1,
+    "effect_value_status": "NEGOTIABLE",
+    "effect_attr": "S_COUNT",
+    "effect_unit": "万元/处",
+    "voltage_level": null,
+    "rule_category": "base",
+    "source_table": "BASE规则配置表",
+    "source_row": 30,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:10kV:3101:35kV",
+    "rule_name": "10kV跨越电力线",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='3101' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3101"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "35kV"
+        }
+      ]
+    },
+    "effect_value": 6,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "10kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 3,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:10kV:3101:110kV",
+    "rule_name": "10kV跨越电力线",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='3101' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3101"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "110kV"
+        }
+      ]
+    },
+    "effect_value": 8,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "10kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 4,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:10kV:3101:220kV",
+    "rule_name": "10kV跨越电力线",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='3101' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3101"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "220kV"
+        }
+      ]
+    },
+    "effect_value": 12,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "10kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 5,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:10kV:3101:330kV",
+    "rule_name": "10kV跨越电力线",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='3101' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3101"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "330kV"
+        }
+      ]
+    },
+    "effect_value": 18,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "10kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 6,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:10kV:3101:500kV",
+    "rule_name": "10kV跨越电力线",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='3101' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3101"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "500kV"
+        }
+      ]
+    },
+    "effect_value": 25,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "10kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 7,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:10kV:3101:±500kV",
+    "rule_name": "10kV跨越电力线",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='3101' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3101"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "±500kV"
+        }
+      ]
+    },
+    "effect_value": 28,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "10kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 8,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:10kV:3101:750kV",
+    "rule_name": "10kV跨越电力线",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='3101' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3101"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "750kV"
+        }
+      ]
+    },
+    "effect_value": 35,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "10kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 9,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:10kV:3101:±800kV",
+    "rule_name": "10kV跨越电力线",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='3101' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3101"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "±800kV"
+        }
+      ]
+    },
+    "effect_value": 42,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "10kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 10,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:10kV:3101:1000kV",
+    "rule_name": "10kV跨越电力线",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='3101' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3101"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "1000kV"
+        }
+      ]
+    },
+    "effect_value": 50,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "10kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 11,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:10kV:3101:±1100kV",
+    "rule_name": "10kV跨越电力线",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='3101' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3101"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "±1100kV"
+        }
+      ]
+    },
+    "effect_value": 60,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "10kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 12,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:10kV:3001:any",
+    "rule_name": "10kV跨越铁路",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='3001' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3001"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        }
+      ]
+    },
+    "effect_value": 8,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "10kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 26,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:35kV:3001:any",
+    "rule_name": "35kV跨越铁路",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='35kV' && S_SUB_TYPE_CODE='3001' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "35kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3001"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        }
+      ]
+    },
+    "effect_value": 12,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "35kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 27,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:110kV:3001:any",
+    "rule_name": "110kV跨越铁路",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='110kV' && S_SUB_TYPE_CODE='3001' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "110kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3001"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        }
+      ]
+    },
+    "effect_value": 18,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "110kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 28,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:220kV:3001:any",
+    "rule_name": "220kV跨越铁路",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='220kV' && S_SUB_TYPE_CODE='3001' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "220kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3001"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        }
+      ]
+    },
+    "effect_value": 28,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "220kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 29,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:330kV:3001:any",
+    "rule_name": "330kV跨越铁路",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='330kV' && S_SUB_TYPE_CODE='3001' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "330kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3001"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        }
+      ]
+    },
+    "effect_value": 40,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "330kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 30,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:500kV:3001:any",
+    "rule_name": "500kV跨越铁路",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='500kV' && S_SUB_TYPE_CODE='3001' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "500kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3001"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        }
+      ]
+    },
+    "effect_value": 60,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "500kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 31,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:±500kV:3001:any",
+    "rule_name": "±500kV跨越铁路",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='±500kV' && S_SUB_TYPE_CODE='3001' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "±500kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3001"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        }
+      ]
+    },
+    "effect_value": "?",
+    "effect_value_status": "NEGOTIABLE",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "±500kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 32,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:750kV:3001:any",
+    "rule_name": "750kV跨越铁路",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='750kV' && S_SUB_TYPE_CODE='3001' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "750kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3001"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        }
+      ]
+    },
+    "effect_value": 85,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "750kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 33,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:±800kV:3001:any",
+    "rule_name": "±800kV跨越铁路",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='±800kV' && S_SUB_TYPE_CODE='3001' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "±800kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3001"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        }
+      ]
+    },
+    "effect_value": 120,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "±800kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 34,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:1000kV:3001:any",
+    "rule_name": "1000kV跨越铁路",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='1000kV' && S_SUB_TYPE_CODE='3001' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "1000kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3001"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        }
+      ]
+    },
+    "effect_value": 160,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "1000kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 35,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:±1100kV:3001:any",
+    "rule_name": "±1100kV跨越铁路",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "voltage_level='±1100kV' && S_SUB_TYPE_CODE='3001' && relation='CROSSES'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "±1100kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "3001"
+        },
+        {
+          "field": "relation",
+          "operator": "eq",
+          "value": "CROSSES"
+        }
+      ]
+    },
+    "effect_value": 200,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "voltage_level": "±1100kV",
+    "rule_category": "cross",
+    "source_table": "交跨成本对应表",
+    "source_row": 36,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2701:F27",
+    "rule_name": "10kV风区F27成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2701' && S_LEVEL='F27'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2701"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "F27"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 2,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2701:F29",
+    "rule_name": "10kV风区F29成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2701' && S_LEVEL='F29'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2701"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "F29"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.01,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 3,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2701:F30",
+    "rule_name": "10kV风区F30成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2701' && S_LEVEL='F30'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2701"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "F30"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.02,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 4,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2701:F31",
+    "rule_name": "10kV风区F31成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2701' && S_LEVEL='F31'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2701"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "F31"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.03,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 5,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2701:F32",
+    "rule_name": "10kV风区F32成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2701' && S_LEVEL='F32'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2701"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "F32"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.05,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 6,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2701:F33",
+    "rule_name": "10kV风区F33成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2701' && S_LEVEL='F33'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2701"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "F33"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.1,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 7,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2701:F35",
+    "rule_name": "10kV风区F35成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2701' && S_LEVEL='F35'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2701"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "F35"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.15,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 8,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2701:F37",
+    "rule_name": "10kV风区F37成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2701' && S_LEVEL='F37'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2701"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "F37"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.2,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 9,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2701:F39",
+    "rule_name": "10kV风区F39成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2701' && S_LEVEL='F39'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2701"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "F39"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.25,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 10,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2702:0-5",
+    "rule_name": "10kV冰区0-5成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2702' && S_LEVEL='0-5'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2702"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "0-5"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 11,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2702:5-10",
+    "rule_name": "10kV冰区5-10成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2702' && S_LEVEL='5-10'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2702"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "5-10"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.01,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 12,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2702:10-15",
+    "rule_name": "10kV冰区10-15成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2702' && S_LEVEL='10-15'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2702"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "10-15"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.03,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 13,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2702:15-20",
+    "rule_name": "10kV冰区15-20成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2702' && S_LEVEL='15-20'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2702"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "15-20"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.12,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 14,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2702:20-30",
+    "rule_name": "10kV冰区20-30成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2702' && S_LEVEL='20-30'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2702"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "20-30"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.21,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 15,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2702:30-40",
+    "rule_name": "10kV冰区30-40成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2702' && S_LEVEL='30-40'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2702"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "30-40"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.32,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 16,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2702:40-50",
+    "rule_name": "10kV冰区40-50成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2702' && S_LEVEL='40-50'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2702"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "40-50"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.44,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 17,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2702:大于50",
+    "rule_name": "10kV冰区大于50成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2702' && S_LEVEL='大于50'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2702"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "大于50"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.58,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 18,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2703:0",
+    "rule_name": "10kV舞动0成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2703' && S_LEVEL='0'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2703"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": 0
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 19,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2703:1",
+    "rule_name": "10kV舞动1成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2703' && S_LEVEL='1'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2703"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": 1
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 20,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2703:2",
+    "rule_name": "10kV舞动2成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2703' && S_LEVEL='2'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2703"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": 2
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 21,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2703:3",
+    "rule_name": "10kV舞动3成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2703' && S_LEVEL='3'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2703"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": 3
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.05,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 22,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2704:轻",
+    "rule_name": "10kV污区轻成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2704' && S_LEVEL='轻'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2704"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "轻"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 23,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2704:中",
+    "rule_name": "10kV污区中成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2704' && S_LEVEL='中'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2704"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "中"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 24,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2704:重",
+    "rule_name": "10kV污区重成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2704' && S_LEVEL='重'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2704"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "重"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 25,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2705:少雷区",
+    "rule_name": "10kV雷区少雷区成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2705' && S_LEVEL='少雷区'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2705"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "少雷区"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 26,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2705:中雷区",
+    "rule_name": "10kV雷区中雷区成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2705' && S_LEVEL='中雷区'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2705"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "中雷区"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 27,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2705:多雷区",
+    "rule_name": "10kV雷区多雷区成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2705' && S_LEVEL='多雷区'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2705"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "多雷区"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 28,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2705:强雷区",
+    "rule_name": "10kV雷区强雷区成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2705' && S_LEVEL='强雷区'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2705"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "强雷区"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 29,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2706:I",
+    "rule_name": "10kV鸟害区I成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2706' && S_LEVEL='I'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2706"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "I"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 30,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2706:II",
+    "rule_name": "10kV鸟害区II成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2706' && S_LEVEL='II'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2706"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "II"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 31,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2706:III",
+    "rule_name": "10kV鸟害区III成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2706' && S_LEVEL='III'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2706"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "III"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.0,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 32,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2205:7度",
+    "rule_name": "10kV地震带7度成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2205' && S_LEVEL='7度'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2205"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "7度"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.05,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 33,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2205:8度",
+    "rule_name": "10kV地震带8度成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2205' && S_LEVEL='8度'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2205"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "8度"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.15,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 34,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2205:9度",
+    "rule_name": "10kV地震带9度成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2205' && S_LEVEL='9度'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2205"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "9度"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.5,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 35,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:geo_weather:10kV:2207:常年冻土",
+    "rule_name": "10kV冻土常年冻土成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2207' && S_LEVEL='常年冻土'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2207"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "常年冻土"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.2,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "geo_weather",
+    "source_table": "地质气象条件成本对应表",
+    "source_row": 36,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2801:0-500",
+    "rule_name": "10kV海拔0-500成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2801' && S_LEVEL='0-500'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2801"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "0-500"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 2,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2801:500-1000",
+    "rule_name": "10kV海拔500-1000成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2801' && S_LEVEL='500-1000'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2801"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "500-1000"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.05,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 3,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2801:1000-1500",
+    "rule_name": "10kV海拔1000-1500成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2801' && S_LEVEL='1000-1500'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2801"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "1000-1500"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.08,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 4,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2801:1500-2000",
+    "rule_name": "10kV海拔1500-2000成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2801' && S_LEVEL='1500-2000'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2801"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "1500-2000"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.12,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 5,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2801:2000-2500",
+    "rule_name": "10kV海拔2000-2500成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2801' && S_LEVEL='2000-2500'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2801"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "2000-2500"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.16,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 6,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2801:2500-3000",
+    "rule_name": "10kV海拔2500-3000成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2801' && S_LEVEL='2500-3000'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2801"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "2500-3000"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.2,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 7,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2801:3000-3500",
+    "rule_name": "10kV海拔3000-3500成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2801' && S_LEVEL='3000-3500'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2801"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "3000-3500"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.24,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 8,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2801:3500-4000",
+    "rule_name": "10kV海拔3500-4000成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2801' && S_LEVEL='3500-4000'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2801"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "3500-4000"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.28,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 9,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2801:4000-4500",
+    "rule_name": "10kV海拔4000-4500成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2801' && S_LEVEL='4000-4500'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2801"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "4000-4500"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.32,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 10,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2801:gt4500",
+    "rule_name": "10kV海拔＞4500成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2801' && S_LEVEL='＞4500'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2801"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "＞4500"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.36,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 11,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2802:平地",
+    "rule_name": "10kV地形平地成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2802' && S_LEVEL='平地'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2802"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "平地"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 12,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2802:丘陵",
+    "rule_name": "10kV地形丘陵成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2802' && S_LEVEL='丘陵'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2802"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "丘陵"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.08,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 13,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2802:一般山地",
+    "rule_name": "10kV地形一般山地成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2802' && S_LEVEL='一般山地'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2802"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "一般山地"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.11,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 14,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2802:高山",
+    "rule_name": "10kV地形高山成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2802' && S_LEVEL='高山'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2802"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "高山"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.2,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 15,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2802:峻岭",
+    "rule_name": "10kV地形峻岭成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2802' && S_LEVEL='峻岭'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2802"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "峻岭"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.31,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 16,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2802:河网泥沼",
+    "rule_name": "10kV地形河网泥沼成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2802' && S_LEVEL='河网泥沼'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2802"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "河网泥沼"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.06,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 17,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2802:沙漠隔壁",
+    "rule_name": "10kV地形沙漠隔壁成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2802' && S_LEVEL='沙漠隔壁'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2802"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "沙漠隔壁"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.07,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 18,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2803:小于15度",
+    "rule_name": "10kV坡度小于15度成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2803' && S_LEVEL='小于15度'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2803"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "小于15度"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 19,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2803:15度-25度",
+    "rule_name": "10kV坡度15度-25度成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2803' && S_LEVEL='15度-25度'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2803"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "15度-25度"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.05,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 20,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2803:25度-35度",
+    "rule_name": "10kV坡度25度-35度成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2803' && S_LEVEL='25度-35度'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2803"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "25度-35度"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.1,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 21,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:10kV:2803:大于35度",
+    "rule_name": "10kV坡度大于35度成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "BOTH",
+    "match_condition_raw": "voltage_level='10kV' && S_SUB_TYPE_CODE='2803' && S_LEVEL='大于35度'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {
+          "field": "voltage_level",
+          "operator": "eq",
+          "value": "10kV"
+        },
+        {
+          "field": "feature_subtype_code",
+          "operator": "eq",
+          "value": "2803"
+        },
+        {
+          "field": "feature_level",
+          "operator": "eq",
+          "value": "大于35度"
+        },
+        {
+          "field": "relation",
+          "operator": "in",
+          "value": [
+            "LOCATED_IN",
+            "INTERSECTS",
+            "WITHIN_BUFFER"
+          ]
+        }
+      ]
+    },
+    "effect_value": 1.2,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "voltage_level": "10kV",
+    "rule_category": "elevation",
+    "source_table": "高程成本对应表",
+    "source_row": 22,
+    "enabled": true
+  }
+]

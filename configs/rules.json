@@ -1,0 +1,84 @@
+[
+  {
+    "rule_id": "rule:base:0001",
+    "rule_name": "禁止穿越保护区",
+    "calc_mode": "FORBIDDEN",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_TYPE_CODE='1100'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {"field": "feature_type_code", "operator": "eq", "value": "1100"},
+        {"field": "relation", "operator": "in", "value": ["LOCATED_IN", "INTERSECTS", "WITHIN_BUFFER"]}
+      ]
+    },
+    "source_table": "demo",
+    "source_row": 1,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:base:farmland_basic",
+    "rule_name": "穿越基本农田",
+    "calc_mode": "SPATIAL_INTERSECT",
+    "effect_target": "BOTH",
+    "match_condition_raw": "S_SUB_TYPE_CODE='1302' && S_LEVEL in ('基本')",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {"field": "feature_subtype_code", "operator": "eq", "value": "1302"},
+        {"field": "feature_level", "operator": "in", "value": ["基本"]},
+        {"field": "relation", "operator": "eq", "value": "INTERSECTS"}
+      ]
+    },
+    "effect_value": 0.012,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_AREA",
+    "effect_unit": "万元/亩",
+    "source_table": "demo",
+    "source_row": 2,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:cross:railway",
+    "rule_name": "跨越铁路",
+    "calc_mode": "CROSS_EVENT",
+    "effect_target": "LINE_SEGMENT",
+    "match_condition_raw": "S_SUB_TYPE_CODE='3001'",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {"field": "feature_subtype_code", "operator": "eq", "value": "3001"},
+        {"field": "relation", "operator": "eq", "value": "CROSSES"}
+      ]
+    },
+    "effect_value": 15,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": "S_CNT",
+    "effect_unit": "万元/次",
+    "source_table": "demo",
+    "source_row": 3,
+    "enabled": true
+  },
+  {
+    "rule_id": "cost_rule:elevation:slope_25_35",
+    "rule_name": "坡度25-35度成本系数",
+    "calc_mode": "MAIN_COST_SCALING",
+    "effect_target": "TOWER_SITE",
+    "match_condition_raw": "S_SUB_TYPE_CODE='2803' && S_LEVEL in ('25_35')",
+    "match_condition_json": {
+      "logic": "AND",
+      "conditions": [
+        {"field": "feature_subtype_code", "operator": "eq", "value": "2803"},
+        {"field": "feature_level", "operator": "eq", "value": "25_35"},
+        {"field": "relation", "operator": "eq", "value": "LOCATED_IN"}
+      ]
+    },
+    "effect_value": 1.1,
+    "effect_value_status": "NUMERIC",
+    "effect_attr": null,
+    "effect_unit": "系数",
+    "source_table": "demo",
+    "source_row": 4,
+    "enabled": true
+  }
+]

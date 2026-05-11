@@ -1,0 +1,90 @@
+[
+  {
+    "source_type": "LineSegment",
+    "source_id": "line_segment:demo:A:B",
+    "relation": "INTERSECTS",
+    "target_type": "GeoFeature",
+    "target_id": "feature:gpkg:pa001",
+    "properties": {
+      "method": "line_polygon_intersection",
+      "confidence": 1.0,
+      "intersect_area_mu": 0.8,
+      "cross_count": null,
+      "distance_m": null,
+      "buffer_distance_m": null
+    },
+    "metadata": {
+      "source_crs": "EPSG:4326",
+      "calculation_crs": "EPSG:4547",
+      "computed_at": "2026-05-11T10:00:00Z",
+      "source_file": "gpkg_slice_v3.gpkg",
+      "preprocess_version": "spatial_preprocess_v1"
+    }
+  },
+  {
+    "source_type": "LineSegment",
+    "source_id": "line_segment:demo:A:B",
+    "relation": "INTERSECTS",
+    "target_type": "GeoFeature",
+    "target_id": "feature:gpkg:farmland001",
+    "properties": {
+      "method": "line_polygon_intersection",
+      "confidence": 1.0,
+      "intersect_area_mu": 12.0,
+      "cross_count": null,
+      "distance_m": null,
+      "buffer_distance_m": null
+    },
+    "metadata": {
+      "source_crs": "EPSG:4326",
+      "calculation_crs": "EPSG:4547",
+      "computed_at": "2026-05-11T10:00:00Z",
+      "source_file": "gpkg_slice_v3.gpkg",
+      "preprocess_version": "spatial_preprocess_v1"
+    }
+  },
+  {
+    "source_type": "LineSegment",
+    "source_id": "line_segment:demo:A:B",
+    "relation": "CROSSES",
+    "target_type": "GeoFeature",
+    "target_id": "feature:gpkg:rail001",
+    "properties": {
+      "method": "line_intersection",
+      "confidence": 1.0,
+      "intersect_area_mu": null,
+      "cross_count": 1,
+      "distance_m": null,
+      "buffer_distance_m": null
+    },
+    "metadata": {
+      "source_crs": "EPSG:4326",
+      "calculation_crs": "EPSG:4547",
+      "computed_at": "2026-05-11T10:00:00Z",
+      "source_file": "gpkg_slice_v3.gpkg",
+      "preprocess_version": "spatial_preprocess_v1"
+    }
+  },
+  {
+    "source_type": "TowerSite",
+    "source_id": "tower_site:demo:A",
+    "relation": "LOCATED_IN",
+    "target_type": "GeoFeature",
+    "target_id": "feature:gpkg:slope001",
+    "properties": {
+      "method": "point_in_polygon",
+      "confidence": 1.0,
+      "intersect_area_mu": null,
+      "cross_count": null,
+      "distance_m": null,
+      "buffer_distance_m": null
+    },
+    "metadata": {
+      "source_crs": "EPSG:4326",
+      "calculation_crs": "EPSG:4547",
+      "computed_at": "2026-05-11T10:00:00Z",
+      "source_file": "gpkg_slice_v3.gpkg",
+      "preprocess_version": "spatial_preprocess_v1"
+    }
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "S_ID": "source_feature_id",
+  "S_NM": "feature_name",
+  "S_TYP_CD": "feature_type_code",
+  "S_TYPE_CODE": "feature_type_code",
+  "S_TYP_NM": "feature_type_name",
+  "S_STYP_CD": "feature_subtype_code",
+  "S_SUB_TYPE_CODE": "feature_subtype_code",
+  "S_STYP_NM": "feature_subtype_name",
+  "S_SUB_TYPE_NAME": "feature_subtype_name",
+  "S_LVL": "feature_level",
+  "S_LEVEL": "feature_level",
+  "S_AREA": "area_mu",
+  "S_LTH": "length_km",
+  "S_CNT": "count"
+}

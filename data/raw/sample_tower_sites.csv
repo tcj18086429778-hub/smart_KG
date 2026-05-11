@@ -1,0 +1,3 @@
+id,name,project_id,site_code,voltage_level
+tower_site:demo:A,候选塔位A,project:demo,A,10kV
+tower_site:demo:B,候选塔位B,project:demo,B,10kV

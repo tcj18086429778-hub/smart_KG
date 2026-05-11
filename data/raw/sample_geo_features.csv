@@ -1,0 +1,5 @@
+id,name,feature_type_code,feature_type_name,feature_subtype_code,feature_subtype_name,feature_level,source_file
+feature:gpkg:pa001,某自然保护区,1100,保护区,1101,自然保护区,缓冲区,gpkg_slice_v3.gpkg
+feature:gpkg:farmland001,基本农田片区,1300,用地,1302,农田,基本,gpkg_slice_v3.gpkg
+feature:gpkg:rail001,铁路一号线,3000,交通,3001,铁路,,gpkg_slice_v3.gpkg
+feature:gpkg:slope001,坡度25至35度区,2800,高程地形,2803,坡度,25度-35度,gpkg_slice_v3.gpkg

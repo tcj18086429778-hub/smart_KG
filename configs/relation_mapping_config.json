@@ -1,0 +1,16 @@
+{
+  "allowed_spatial_relations": [
+    "LOCATED_IN",
+    "INTERSECTS",
+    "CROSSES",
+    "DISTANCE_TO",
+    "WITHIN_BUFFER",
+    "OVERLAPS",
+    "NEAR"
+  ],
+  "effect_target_mapping": {
+    "TOWER": "TOWER_SITE",
+    "LINE": "LINE_SEGMENT",
+    "ALL": "BOTH"
+  }
+}

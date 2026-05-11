@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "smart_KG spatial relation",
+  "type": "object",
+  "required": ["source_type", "source_id", "relation", "target_type", "target_id", "properties", "metadata"],
+  "properties": {
+    "source_type": {"enum": ["TowerSite", "LineSegment", "GeoFeature"]},
+    "source_id": {"type": "string"},
+    "relation": {"enum": ["LOCATED_IN", "INTERSECTS", "CROSSES", "DISTANCE_TO", "WITHIN_BUFFER", "OVERLAPS", "NEAR"]},
+    "target_type": {"enum": ["TowerSite", "LineSegment", "GeoFeature"]},
+    "target_id": {"type": "string"},
+    "properties": {"type": "object"},
+    "metadata": {
+      "type": "object",
+      "required": ["source_crs", "calculation_crs", "computed_at", "source_file", "preprocess_version"],
+      "properties": {
+        "source_crs": {"type": "string"},
+        "calculation_crs": {"type": "string"},
+        "computed_at": {"type": "string"},
+        "source_file": {"type": "string"},
+        "preprocess_version": {"type": "string"}
+      }
+    }
+  }
+}

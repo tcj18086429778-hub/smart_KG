@@ -1,0 +1,31 @@
+{
+  "node_labels": [
+    "Project",
+    "VoltageLevel",
+    "TowerSite",
+    "Tower",
+    "LineSegment",
+    "RouteScheme",
+    "GeoFeature",
+    "ConstraintRule",
+    "CostRule",
+    "BaseCostRule",
+    "Condition",
+    "DataSource"
+  ],
+  "relationship_types": [
+    "STARTS_FROM",
+    "ENDS_AT",
+    "CONNECTS_TO",
+    "LOCATED_IN",
+    "INTERSECTS",
+    "CROSSES",
+    "DISTANCE_TO",
+    "WITHIN_BUFFER",
+    "MATCHES_RULE",
+    "TRIGGERS_CONSTRAINT",
+    "TRIGGERS_COST_RULE",
+    "HAS_CONDITION",
+    "DERIVED_FROM"
+  ]
+}

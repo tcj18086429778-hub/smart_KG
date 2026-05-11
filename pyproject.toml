@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smart-kg"
+version = "0.1.0"
+description = "Electric tower siting knowledge graph MVP with rule evaluation and optional Neo4j export."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.110",
+  "neo4j>=5.20",
+  "openpyxl>=3.1",
+  "pandas>=2.2",
+  "pydantic>=2.7",
+  "python-dotenv>=1.0",
+  "uvicorn[standard]>=0.29",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "httpx>=0.27",
+]
+
+[project.scripts]
+smart-kg = "smart_kg.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

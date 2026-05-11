@@ -1,0 +1,16 @@
+{
+  "cost_value_status": {
+    "?": "NEGOTIABLE",
+    "-1": "NEGOTIABLE",
+    "/": "IGNORED",
+    "NULL": "UNCLASSIFIED_OR_EMPTY"
+  },
+  "null_like_values": ["", "NULL", "null", "None", null],
+  "unit_policy": {
+    "S_AREA": "mu",
+    "S_LTH": "km",
+    "distance_m": "m",
+    "intersect_area_mu": "mu",
+    "cross_count": "count"
+  }
+}
