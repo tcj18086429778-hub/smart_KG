@@ -1,12 +1,20 @@
 # smart_KG
 
-电塔选址知识图谱与成本栅格系统。当前主链路：
+电塔选址知识图谱与成本栅格系统。
+
+**主链路**（图谱驱动，需 Neo4j）：
 
 - 从 Excel 分类体系提取标准化成本规则（`standardize-cost-rules`）
-- 对 GPKG 执行规则匹配与成本字段填充（`cost-gpkg` / `cost-gpkg-from-graph`）
-- 将成本化 GPKG 栅格化为成本面（`build-cost-raster` / `build-cost-raster-from-graph`）
+- 从 Neo4j 图谱读取活跃规则集，对 GPKG 执行规则匹配与成本字段填充（`cost-gpkg-from-graph`）
+- 从 Neo4j 图谱读取 RasterSpec 参数，将成本化 GPKG 栅格化为成本面（`build-cost-raster-from-graph`）
 - 将规则集和栅格参数写入 Neo4j 图谱目录（`import-rule-set-neo4j` / `import-cost-rules-neo4j`）
 - 图谱驱动全链路管道（`run-route-pipeline-from-graph`）
+
+**灾备/离线模式**（文件驱动，Neo4j 不可用时的 fallback）：
+
+- 从本地 cost rules JSON 对 GPKG 执行成本字段填充（`cost-gpkg`）
+- 使用 CLI 参数指定栅格规格，构建成本栅格（`build-cost-raster`）
+- 文件驱动全链路管道（`run-route-pipeline-from-file`）
 
 ## 1. 环境安装
 
@@ -42,30 +50,30 @@ smart-kg standardize-cost-rules --excel "选线数据分类体系20260422.xlsx" 
 
 ### 2.2 GPKG 成本化
 
-文件驱动：
-
-```powershell
-smart-kg cost-gpkg --source-gpkg 上海_source.gpkg --out-gpkg data/standardized/上海_costed.gpkg --voltage-level 110kV --rules data/standardized/cost_rules_20260422.json
-```
-
-图谱驱动（从 Neo4j 读取活跃规则集）：
+主链路（图谱驱动，从 Neo4j 读取活跃规则集）：
 
 ```powershell
 smart-kg cost-gpkg-from-graph --source-gpkg 上海_source.gpkg --out-gpkg data/standardized/上海_costed.gpkg --voltage-level 110kV
 ```
 
-### 2.3 构建成本栅格
-
-文件驱动：
+灾备/离线模式（文件驱动，Neo4j 不可用时使用本地 cost rules JSON）：
 
 ```powershell
-smart-kg build-cost-raster --gpkg data/standardized/上海_costed.gpkg --out-dir exports/raster_route_eval/ --voltage-level 110kV --resolution 20
+smart-kg cost-gpkg --source-gpkg 上海_source.gpkg --out-gpkg data/standardized/上海_costed.gpkg --voltage-level 110kV --rules data/standardized/cost_rules_20260422.json
 ```
 
-图谱驱动：
+### 2.3 构建成本栅格
+
+主链路（图谱驱动，从 Neo4j 读取 RasterSpec 参数）：
 
 ```powershell
 smart-kg build-cost-raster-from-graph --gpkg data/standardized/上海_costed.gpkg --out-dir exports/raster_route_eval/ --voltage-level 110kV
+```
+
+灾备/离线模式（文件驱动，Neo4j 不可用时使用 CLI 参数）：
+
+```powershell
+smart-kg build-cost-raster --gpkg data/standardized/上海_costed.gpkg --out-dir exports/raster_route_eval/ --voltage-level 110kV --resolution 20
 ```
 
 ### 2.4 导入 Neo4j 图谱
@@ -101,9 +109,9 @@ smart-kg list-rule-sets
 smart-kg list-rule-sets --voltage-level 110kV
 ```
 
-### 2.5 图谱驱动全链路
+### 2.5 图谱驱动全链路（主链路）
 
-一条命令完成 GPKG 成本化 + 栅格构建：
+一条命令完成 GPKG 成本化 + 栅格构建（需要 Neo4j）：
 
 ```powershell
 smart-kg run-route-pipeline-from-graph \
@@ -111,6 +119,21 @@ smart-kg run-route-pipeline-from-graph \
   --out-gpkg data/standardized/上海_costed.gpkg \
   --out-dir exports/raster_route_eval/ \
   --voltage-level 110kV
+```
+
+### 2.6 文件驱动全链路（灾备/离线模式）
+
+Neo4j 不可用时的 fallback 组合命令，输入 source GPKG + rules JSON，
+内部串联 `cost-gpkg` + `build-cost-raster`：
+
+```powershell
+smart-kg run-route-pipeline-from-file \
+  --source-gpkg 上海_source.gpkg \
+  --rules data/standardized/cost_rules_20260422.json \
+  --out-gpkg data/standardized/上海_costed.gpkg \
+  --out-dir exports/raster_route_eval/ \
+  --voltage-level 110kV \
+  --resolution 20
 ```
 
 ## 3. API 服务

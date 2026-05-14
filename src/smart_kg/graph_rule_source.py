@@ -307,6 +307,57 @@ def run_route_pipeline_from_graph(
     return result
 
 
+def run_route_pipeline_from_file(
+    source_gpkg: Path,
+    out_gpkg: Path,
+    raster_out_dir: Path,
+    voltage_level: str,
+    rules: list[CostRuleEntry],
+    resolution: float = 20.0,
+    calculation_crs: str | None = None,
+    base_cost: float = 1.0,
+    layers: list[str] | None = None,
+) -> dict[str, Any]:
+    """执行文件驱动的全链路走线管道（灾备/离线模式）。
+
+    Neo4j 不可用时的回退路径，直接使用本地 cost rules JSON 和 CLI 参数
+    串联 ``cost-gpkg`` + ``build-cost-raster`` 两步，输出与图谱驱动管道
+    格式对齐的结果字典。
+    """
+    logger.info(
+        "开始执行文件驱动全链路（灾备/离线模式）：source_gpkg=%s, out_gpkg=%s, raster_out_dir=%s, voltage_level=%s",
+        source_gpkg,
+        out_gpkg,
+        raster_out_dir,
+        voltage_level,
+    )
+    stats = standardize_gpkg(
+        source_gpkg=source_gpkg,
+        out_gpkg=out_gpkg,
+        voltage_level=voltage_level,
+        rules=rules,
+        layers=layers,
+    )
+    metadata = build_cost_raster(
+        gpkg_path=out_gpkg,
+        out_dir=raster_out_dir,
+        voltage_level=voltage_level,
+        resolution=resolution,
+        calculation_crs=calculation_crs,
+        base_cost=base_cost,
+    )
+    result = {
+        "mode": "file_driven_fallback",
+        "voltage_level": voltage_level,
+        "costed_gpkg_path": str(out_gpkg),
+        "raster_out_dir": str(raster_out_dir),
+        "gpkg_stats": stats,
+        "raster_metadata": metadata,
+    }
+    logger.info("文件驱动全链路结束（灾备/离线模式）：result=%s", summarize_for_log(result))
+    return result
+
+
 def _raster_spec_from_graph(row: Any, source: str = "ruleset") -> GraphRasterSpec:
     """将 Neo4j 查询结果转换为本地栅格配置对象。"""
 

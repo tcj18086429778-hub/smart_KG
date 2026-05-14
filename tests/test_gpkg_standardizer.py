@@ -181,3 +181,40 @@ def test_fallback_reason_code_is_stable():
     from smart_kg.gpkg_standardizer import _fallback_reason_code
 
     assert _fallback_reason_code("source_fallback:NT") == _fallback_reason_code("source_fallback:NT")
+
+
+def test_standardize_gpkg_creates_missing_parent_dirs(tmp_path: Path):
+    """验证 out_gpkg 的父目录不存在时 standardize_gpkg 能自动创建。"""
+    import geopandas as gpd
+    from shapely.geometry import box
+
+    from smart_kg.gpkg_standardizer import standardize_gpkg
+
+    source_gpkg = tmp_path / "source.gpkg"
+    gdf = gpd.GeoDataFrame(
+        {
+            "featureName": ["feature_a"],
+            "factorLevel1": ["cat"],
+            "factorLevel2": ["sub"],
+            "factorType": ["detail"],
+            "factorTypeCode": ["0001"],
+            "factorTypeKey": ["0001"],
+            "level": ["L1"],
+        },
+        geometry=[box(0, 0, 10, 10)],
+        crs="EPSG:4326",
+    )
+    gdf.to_file(source_gpkg, layer="building", driver="GPKG")
+
+    out_gpkg = tmp_path / "nested" / "deeply" / "output.gpkg"
+    assert not out_gpkg.parent.exists()
+
+    stats = standardize_gpkg(
+        source_gpkg=source_gpkg,
+        out_gpkg=out_gpkg,
+        voltage_level="110kV",
+        rules=[],
+    )
+
+    assert out_gpkg.exists()
+    assert stats["total_features"] > 0

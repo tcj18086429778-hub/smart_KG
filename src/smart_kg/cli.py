@@ -418,6 +418,48 @@ def run_list_rule_sets(args: argparse.Namespace) -> None:
                 print("---")
 
 
+def run_route_pipeline_from_file(args: argparse.Namespace) -> None:
+    """执行文件驱动的全链路走线管道（灾备/离线模式）。
+
+    Neo4j 不可用时的回退路径。从本地 cost rules JSON 读取规则，
+    使用 CLI 参数指定栅格规格，依次完成 GPKG 成本化和栅格构建，
+    是 "cost-gpkg + build-cost-raster" 的组合命令。
+    """
+    from .graph_rule_source import run_route_pipeline_from_file
+    from .cost_rule_loader import load_cost_rules
+
+    _log_command_start(
+        "run-route-pipeline-from-file",
+        source_gpkg=args.source_gpkg,
+        rules=args.rules,
+        out_gpkg=args.out_gpkg,
+        out_dir=args.out_dir,
+        voltage_level=args.voltage_level,
+        resolution=args.resolution,
+        calculation_crs=args.calculation_crs,
+        base_cost=args.base_cost,
+    )
+    rules_path = Path(args.rules)
+    rules = load_cost_rules(rules_path)
+    result = run_route_pipeline_from_file(
+        source_gpkg=Path(args.source_gpkg),
+        out_gpkg=Path(args.out_gpkg),
+        raster_out_dir=Path(args.out_dir),
+        voltage_level=args.voltage_level,
+        rules=rules,
+        resolution=args.resolution,
+        calculation_crs=args.calculation_crs,
+        base_cost=args.base_cost,
+    )
+    logger.info(
+        "文件驱动全链路完成（灾备/离线模式）：out_gpkg=%s, out_dir=%s",
+        args.out_gpkg,
+        args.out_dir,
+    )
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    print(f"\nFile-driven route pipeline completed (DR fallback). GPKG: {args.out_gpkg}, raster dir: {args.out_dir}")
+
+
 def run_route_pipeline_from_graph(args: argparse.Namespace) -> None:
     """执行图谱驱动的全链路走线管道。
 
@@ -590,6 +632,20 @@ def build_parser() -> argparse.ArgumentParser:
     graph_pipeline_parser.add_argument("--calculation-crs", default=None, help="Optional override for target CRS.")
     graph_pipeline_parser.add_argument("--base-cost", type=float, default=None, help="Optional override for baseline routing cost.")
     graph_pipeline_parser.set_defaults(func=run_route_pipeline_from_graph)
+
+    file_pipeline_parser = subparsers.add_parser(
+        "run-route-pipeline-from-file",
+        help="Run the full file-driven pipeline from source GPKG + cost rules JSON to costed GPKG and grayscale raster (DR/offline fallback when Neo4j is unavailable).",
+    )
+    file_pipeline_parser.add_argument("--source-gpkg", required=True, help="Path to source GPKG.")
+    file_pipeline_parser.add_argument("--rules", required=True, help="Cost rules JSON path from standardize-cost-rules.")
+    file_pipeline_parser.add_argument("--out-gpkg", required=True, help="Output costed GPKG path.")
+    file_pipeline_parser.add_argument("--out-dir", required=True, help="Output directory for raster files.")
+    file_pipeline_parser.add_argument("--voltage-level", required=True, help="Voltage level (e.g. 110kV).")
+    file_pipeline_parser.add_argument("--resolution", type=float, default=20.0, help="Raster resolution in meters.")
+    file_pipeline_parser.add_argument("--calculation-crs", default=None, help="Target CRS for rasterization (e.g. EPSG:4547).")
+    file_pipeline_parser.add_argument("--base-cost", type=float, default=1.0, help="Baseline routing cost applied to all traversable pixels.")
+    file_pipeline_parser.set_defaults(func=run_route_pipeline_from_file)
 
     # RuleSet / RasterSpec graph catalog commands.
 

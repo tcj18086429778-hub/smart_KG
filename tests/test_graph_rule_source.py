@@ -257,3 +257,179 @@ def test_run_route_pipeline_from_graph_passes_graph_spec(monkeypatch: pytest.Mon
     assert captured["raster"]["base_cost"] == 2.0
     assert captured["raster"]["included_layers"] == ["building"]
     assert captured["raster"]["excluded_layers"] == ["tower"]
+
+
+def test_run_route_pipeline_from_file_chains_correctly(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """验证文件驱动全链路将参数正确传递给标准化和栅格化步骤。"""
+    from smart_kg.cost_rule_loader import CostRuleEntry
+    from smart_kg.graph_rule_source import run_route_pipeline_from_file
+
+    captured: dict[str, object] = {}
+
+    def fake_standardize_gpkg(source_gpkg, out_gpkg, voltage_level, rules, layers=None):
+        captured["standardize"] = {
+            "source_gpkg": source_gpkg,
+            "out_gpkg": out_gpkg,
+            "voltage_level": voltage_level,
+            "rule_count": len(rules),
+            "layers": layers,
+        }
+        return {"total_features": 5, "enriched": 4}
+
+    def fake_build_cost_raster(gpkg_path, out_dir, voltage_level, resolution, calculation_crs, base_cost, included_layers=None, excluded_layers=None):
+        captured["raster"] = {
+            "gpkg_path": gpkg_path,
+            "out_dir": out_dir,
+            "voltage_level": voltage_level,
+            "resolution": resolution,
+            "calculation_crs": calculation_crs,
+            "base_cost": base_cost,
+        }
+        return {"cost_surface_path": str(out_dir / "cost_surface.tif")}
+
+    monkeypatch.setattr("smart_kg.graph_rule_source.standardize_gpkg", fake_standardize_gpkg)
+    monkeypatch.setattr("smart_kg.graph_rule_source.build_cost_raster", fake_build_cost_raster)
+
+    rules = [
+        CostRuleEntry(
+            rule_id="cost_rule:test:dr",
+            rule_name="测试成本",
+            source_table="table",
+            source_row=1,
+            calc_mode="MAIN_COST_INCREMENT",
+            effect_value_status="NUMERIC",
+            effect_value=10.0,
+            reason_code=2001,
+        )
+    ]
+
+    result = run_route_pipeline_from_file(
+        source_gpkg=tmp_path / "source.gpkg",
+        out_gpkg=tmp_path / "costed.gpkg",
+        raster_out_dir=tmp_path / "raster",
+        voltage_level="110kV",
+        rules=rules,
+        resolution=25.0,
+        calculation_crs="EPSG:4547",
+        base_cost=2.0,
+    )
+
+    assert result["mode"] == "file_driven_fallback"
+    assert result["voltage_level"] == "110kV"
+    assert captured["standardize"]["rule_count"] == 1
+    assert captured["raster"]["resolution"] == 25.0
+    assert captured["raster"]["calculation_crs"] == "EPSG:4547"
+    assert captured["raster"]["base_cost"] == 2.0
+
+
+def test_cli_parse_run_route_pipeline_from_file() -> None:
+    """验证 CLI 能正确解析 run-route-pipeline-from-file 子命令及所有参数。"""
+    from smart_kg.cli import build_parser
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "run-route-pipeline-from-file",
+            "--source-gpkg", "上海_source.gpkg",
+            "--rules", "data/standardized/cost_rules.json",
+            "--out-gpkg", "data/standardized/costed.gpkg",
+            "--out-dir", "exports/raster_route_eval/",
+            "--voltage-level", "110kV",
+            "--resolution", "30",
+            "--calculation-crs", "EPSG:4547",
+            "--base-cost", "2.5",
+        ]
+    )
+
+    assert args.command == "run-route-pipeline-from-file"
+    assert args.source_gpkg == "上海_source.gpkg"
+    assert args.rules == "data/standardized/cost_rules.json"
+    assert args.out_gpkg == "data/standardized/costed.gpkg"
+    assert args.out_dir == "exports/raster_route_eval/"
+    assert args.voltage_level == "110kV"
+    assert args.resolution == 30.0
+    assert args.calculation_crs == "EPSG:4547"
+    assert args.base_cost == 2.5
+
+
+def test_cli_parse_run_route_pipeline_from_file_defaults() -> None:
+    """验证文件驱动管道 CLI 使用正确的默认值。"""
+    from smart_kg.cli import build_parser
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "run-route-pipeline-from-file",
+            "--source-gpkg", "source.gpkg",
+            "--rules", "rules.json",
+            "--out-gpkg", "costed.gpkg",
+            "--out-dir", "raster/",
+            "--voltage-level", "220kV",
+        ]
+    )
+
+    assert args.resolution == 20.0
+    assert args.calculation_crs is None
+    assert args.base_cost == 1.0
+
+
+def test_run_route_pipeline_from_file_creates_missing_dirs(tmp_path: Path) -> None:
+    """验证文件驱动全链路在 out_gpkg 父目录和 out_dir 不存在时也能正常创建输出。"""
+    import geopandas as gpd
+    from shapely.geometry import box
+
+    from smart_kg.cost_rule_loader import CostRuleEntry
+    from smart_kg.graph_rule_source import run_route_pipeline_from_file
+
+    source_gpkg = tmp_path / "source.gpkg"
+    gdf = gpd.GeoDataFrame(
+        {
+            "featureName": ["feature_a"],
+            "factorLevel1": ["cat"],
+            "factorLevel2": ["sub"],
+            "factorType": ["detail"],
+            "factorTypeCode": ["0001"],
+            "factorTypeKey": ["0001"],
+            "level": ["L1"],
+        },
+        geometry=[box(0, 0, 10, 10)],
+        crs="EPSG:4550",
+    )
+    gdf.to_file(source_gpkg, layer="building", driver="GPKG")
+
+    rules = [
+        CostRuleEntry(
+            rule_id="cost_rule:test:dr",
+            rule_name="测试禁建",
+            source_table="test",
+            source_row=1,
+            calc_mode="FORBIDDEN",
+            effect_value_status="FORBIDDEN",
+            effect_value=None,
+            reason_code=1001,
+            priority=1000,
+            match_condition_json={"field": "feature_subtype_code", "operator": "eq", "value": "0001"},
+        )
+    ]
+
+    out_gpkg = tmp_path / "nested" / "deep" / "costed.gpkg"
+    raster_out_dir = tmp_path / "nested" / "deep" / "raster"
+    assert not out_gpkg.parent.exists()
+    assert not raster_out_dir.exists()
+
+    result = run_route_pipeline_from_file(
+        source_gpkg=source_gpkg,
+        out_gpkg=out_gpkg,
+        raster_out_dir=raster_out_dir,
+        voltage_level="110kV",
+        rules=rules,
+        resolution=10.0,
+        calculation_crs="EPSG:4550",
+        base_cost=1.0,
+    )
+
+    assert result["mode"] == "file_driven_fallback"
+    assert out_gpkg.exists()
+    assert raster_out_dir.exists()
+    assert (raster_out_dir / "cost_surface.tif").exists()
+    assert (raster_out_dir / "blocked_mask.tif").exists()

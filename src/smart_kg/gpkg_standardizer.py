@@ -116,6 +116,7 @@ def standardize_gpkg(
         else:
             rules = []
 
+    out_gpkg.parent.mkdir(parents=True, exist_ok=True)
     if out_gpkg.exists():
         out_gpkg.unlink()
         logger.debug("删除已有输出 GPKG：out_gpkg=%s", out_gpkg)
