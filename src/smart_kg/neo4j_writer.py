@@ -1,84 +1,45 @@
+"""Neo4j 图谱写入器。
+
+本文件负责将成本规则和 GPKG 要素以统一的图谱模型写入 Neo4j 数据库。
+提供两套图谱写入能力：
+
+1. **走线决策图谱**（write_route_decision_graph）：
+   RouteDecision -> RoutingFeature -> CostRule 的三层结构，
+   支持成本栅格元数据的绑定和图层级别的 include/exclude 关系。
+2. **RuleSet 目录图谱**（write_rule_set_catalog）：
+   RuleSet -> CostRule、RuleSet -> RasterSpec、RasterSpec -> RoutingLayer
+   的图式结构，供 graph_rule_source 在运行时查询。
+"""
+
 from __future__ import annotations
 
 import json
+import logging
 import os
+from datetime import datetime, timezone
 from typing import Any
 
-from .schemas import Condition, EvaluationReport, GeoFeature, LineSegment, Rule, SpatialRelation, TowerSite
+from .logging_utils import instrument_class_methods
 
-
-def safe_rel_type(value: str) -> str:
-    if not value.replace("_", "").isalnum() or not value.isupper():
-        raise ValueError(f"Unsafe relationship type: {value}")
-    return value
-
-
-def prepare_node_props(row: dict[str, Any]) -> dict[str, Any]:
-    props = dict(row)
-    nested = props.pop("properties", None)
-    if nested:
-        props["properties_json"] = json.dumps(nested, ensure_ascii=False)
-    return props
-
-
-def condition_node_id(rule_id: str, path: str) -> str:
-    return f"condition:{rule_id}:{path}"
-
-
-def append_condition_rows(
-    condition: Condition,
-    rule_id: str,
-    path: str,
-    rows: list[dict[str, Any]],
-    rels: list[dict[str, Any]],
-) -> None:
-    node_id = condition_node_id(rule_id, path)
-    if condition.logic:
-        rows.append(
-            {
-                "id": node_id,
-                "rule_id": rule_id,
-                "kind": "group",
-                "logic": condition.logic.value,
-                "path": path,
-            }
-        )
-        for index, child in enumerate(condition.conditions or []):
-            child_path = f"{path}.{index}"
-            child_id = condition_node_id(rule_id, child_path)
-            rels.append({"parent_id": node_id, "child_id": child_id, "order": index})
-            append_condition_rows(child, rule_id, child_path, rows, rels)
-        return
-
-    rows.append(
-        {
-            "id": node_id,
-            "rule_id": rule_id,
-            "kind": "leaf",
-            "field": condition.field,
-            "operator": condition.operator.value if condition.operator else None,
-            "value_json": json.dumps(condition.value, ensure_ascii=False),
-            "path": path,
-        }
-    )
-
-
-def collect_condition_fields(condition: Condition) -> set[str]:
-    if condition.logic:
-        fields: set[str] = set()
-        for child in condition.conditions or []:
-            fields.update(collect_condition_fields(child))
-        return fields
-    return {condition.field} if condition.field else set()
-
-
-def cost_factor_id(rule: Rule) -> str:
-    attr = rule.effect_attr or "none"
-    return f"cost_factor:{rule.calc_mode.value}:{attr}"
+logger = logging.getLogger(__name__)
 
 
 class Neo4jWriter:
+    """Neo4j 图谱写入器。
+
+    负责将 smart_KG 的运行结果以规范化的图模型写入 Neo4j，
+    支持走线决策图谱和 RuleSet 目录图谱两种写入模式。
+    """
+
     def __init__(self) -> None:
+        """初始化 Neo4j 写入器。
+
+        自动从环境变量 (.env) 读取连接参数，连接参数：
+        - NEO4J_URI（默认 bolt://localhost:7687）
+        - NEO4J_USERNAME（默认 neo4j）
+        - NEO4J_PASSWORD（默认 change-me）
+        - NEO4J_DATABASE（默认 neo4j）
+        """
         try:
             from dotenv import load_dotenv
 
@@ -92,342 +53,547 @@ class Neo4jWriter:
         password = os.getenv("NEO4J_PASSWORD", "change-me")
         self.database = os.getenv("NEO4J_DATABASE", "neo4j")
         self.driver = GraphDatabase.driver(uri, auth=(username, password))
+        logger.info("Neo4j 连接已建立：uri=%s, database=%s", uri, self.database)
 
     def close(self) -> None:
+        """关闭 Neo4j 驱动连接。"""
+        logger.info("关闭 Neo4j 连接")
         self.driver.close()
 
-    def write_all(
+    # ── 走线决策图谱 ────────────────────────────────────────────────────────
+
+    def write_route_decision_graph(
         self,
-        features: dict[str, GeoFeature],
-        tower_sites: dict[str, TowerSite],
-        line_segments: dict[str, LineSegment],
-        spatial_relations: list[SpatialRelation],
-        rules: list[Rule],
-        report: EvaluationReport,
-        base_cost_rules: list[dict[str, Any]] | None = None,
-    ) -> None:
-        base_cost_rules = base_cost_rules or []
-        with self.driver.session(database=self.database) as session:
-            session.execute_write(self._create_constraints)
-            session.execute_write(self._cleanup_rule_artifacts, [rule.rule_id for rule in rules])
-            session.execute_write(self._write_tower_sites, list(tower_sites.values()))
-            session.execute_write(self._write_line_segments, list(line_segments.values()))
-            session.execute_write(self._write_features, list(features.values()))
-            session.execute_write(self._write_rules, rules)
-            session.execute_write(self._write_rule_conditions, rules)
-            session.execute_write(self._write_rule_metadata_relationships, rules)
-            session.execute_write(self._write_base_cost_rules, base_cost_rules)
-            session.execute_write(self._write_segment_links, list(line_segments.values()))
-            session.execute_write(self._write_spatial_relations, spatial_relations)
-            session.execute_write(self._write_feature_rule_matches, report)
-            session.execute_write(self._write_triggers, report)
+        entries: list[dict[str, Any]],
+        features: list[dict[str, Any]],
+        voltage_level: str,
+        raster_metadata: dict[str, Any] | None = None,
+        decision_id: str | None = None,
+    ) -> dict[str, Any]:
+        """将完整的走线决策图谱写入 Neo4j。
 
-    @staticmethod
-    def _create_constraints(tx: Any) -> None:
-        statements = [
-            "CREATE CONSTRAINT tower_site_id IF NOT EXISTS FOR (n:TowerSite) REQUIRE n.id IS UNIQUE",
-            "CREATE CONSTRAINT line_segment_id IF NOT EXISTS FOR (n:LineSegment) REQUIRE n.id IS UNIQUE",
-            "CREATE CONSTRAINT geo_feature_id IF NOT EXISTS FOR (n:GeoFeature) REQUIRE n.id IS UNIQUE",
-            "CREATE CONSTRAINT rule_id IF NOT EXISTS FOR (n:Rule) REQUIRE n.id IS UNIQUE",
-            "CREATE CONSTRAINT condition_id IF NOT EXISTS FOR (n:Condition) REQUIRE n.id IS UNIQUE",
-            "CREATE CONSTRAINT effect_target_id IF NOT EXISTS FOR (n:EffectTarget) REQUIRE n.id IS UNIQUE",
-            "CREATE CONSTRAINT field_id IF NOT EXISTS FOR (n:Field) REQUIRE n.id IS UNIQUE",
-            "CREATE CONSTRAINT cost_factor_id IF NOT EXISTS FOR (n:CostFactor) REQUIRE n.id IS UNIQUE",
-            "CREATE CONSTRAINT voltage_level_id IF NOT EXISTS FOR (n:VoltageLevel) REQUIRE n.id IS UNIQUE",
-            "CREATE CONSTRAINT base_cost_rule_id IF NOT EXISTS FOR (n:BaseCostRule) REQUIRE n.id IS UNIQUE",
+        图谱结构：
+          RouteDecision -[:HAS_ROUTING_FEATURE]-> RoutingFeature
+          RoutingFeature -[:TRIGGERED_BY_RULE]-> CostRule
+          RouteDecision -[:INCLUDES_LAYER|EXCLUDES_LAYER]-> RoutingLayer
+          RouteDecision -[:GENERATES_COST_SURFACE]-> CostSurface
+
+        参数：
+            entries: CostRuleEntry 字典列表。
+            features: 成本化后的 GPKG 要素字典列表（不含塔位）。
+            voltage_level: 电压等级（如 "110kV"）。
+            raster_metadata: 可选的成本栅格元数据字典。
+            decision_id: 可选的显式决策 ID。
+
+        返回：
+            包含 decision_id、rule_count、feature_count、forbidden_count、cost_count 的字典。
+        """
+        from .cost_rule_loader import CostRuleEntry
+
+        decision_id = decision_id or (
+            f"route_decision:{voltage_level}:"
+            f"{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+        )
+
+        forbidden_count = sum(1 for f in features if f.get("calc_mode") == "FORBIDDEN")
+        cost_count = sum(
+            1
+            for f in features
+            if f.get("calc_mode") and f.get("calc_mode") != "FORBIDDEN"
+        )
+
+        prep_entries = [
+            e if isinstance(e, dict)
+            else CostRuleEntry.model_validate(e).model_dump(mode="json")
+            for e in entries
         ]
-        for statement in statements:
-            tx.run(statement)
+
+        logger.info(
+            "开始写入走线决策图谱：decision_id=%s, voltage_level=%s, rule_count=%s, feature_count=%s, forbidden=%s, cost_affected=%s",
+            decision_id,
+            voltage_level,
+            len(prep_entries),
+            len(features),
+            forbidden_count,
+            cost_count,
+        )
+
+        with self.driver.session(database=self.database) as session:
+            session.execute_write(self._write_route_decision_constraints)
+            session.execute_write(self._cleanup_route_decision_artifacts, decision_id)
+            session.execute_write(
+                self._write_route_decision_node, decision_id, voltage_level,
+                {"total_features": len(features), "forbidden_count": forbidden_count,
+                 "cost_count": cost_count, "rule_count": len(prep_entries)},
+            )
+            session.execute_write(self._write_cost_rule_entries_from_dicts, prep_entries)
+            session.execute_write(self._write_routing_features, features, decision_id)
+            if raster_metadata:
+                session.execute_write(
+                    self._write_route_cost_surface, decision_id, raster_metadata,
+                )
+
+        logger.info(
+            "走线决策图谱写入完成：decision_id=%s, rule_count=%s, feature_count=%s",
+            decision_id,
+            len(prep_entries),
+            len(features),
+        )
+        return {
+            "decision_id": decision_id,
+            "rule_count": len(prep_entries),
+            "feature_count": len(features),
+            "forbidden_count": forbidden_count,
+            "cost_count": cost_count,
+        }
 
     @staticmethod
-    def _cleanup_rule_artifacts(tx: Any, rule_ids: list[str]) -> None:
+    def _write_route_decision_constraints(tx: Any) -> None:
+        """创建走线决策图谱的节点唯一性约束。"""
+        for stmt in [
+            "CREATE CONSTRAINT route_decision_id IF NOT EXISTS "
+            "FOR (n:RouteDecision) REQUIRE n.id IS UNIQUE",
+            "CREATE CONSTRAINT routing_feature_id IF NOT EXISTS "
+            "FOR (n:RoutingFeature) REQUIRE n.id IS UNIQUE",
+            "CREATE CONSTRAINT cost_rule_id IF NOT EXISTS "
+            "FOR (n:CostRule) REQUIRE n.id IS UNIQUE",
+            "CREATE CONSTRAINT routing_layer_id IF NOT EXISTS "
+            "FOR (n:RoutingLayer) REQUIRE n.id IS UNIQUE",
+        ]:
+            tx.run(stmt)
+
+    @staticmethod
+    def _cleanup_route_decision_artifacts(tx: Any, decision_id: str) -> None:
+        """清理指定决策 ID 的已有图谱数据，支持重复导入。"""
         tx.run(
             """
-            MATCH ()-[r:MATCHES_RULE|TRIGGERS_CONSTRAINT|TRIGGERS_COST_RULE|AFFECTS_TARGET|USES_FIELD|HAS_COST_FACTOR]->()
-            DELETE r
-            """
-        )
-        tx.run("MATCH ()-[r:HAS_BASE_COST]->() DELETE r")
-        tx.run("MATCH (c:Condition) DETACH DELETE c")
-        tx.run("MATCH (n) WHERE n:EffectTarget OR n:Field OR n:CostFactor DETACH DELETE n")
-        tx.run("MATCH (n) WHERE n:VoltageLevel OR n:BaseCostRule DETACH DELETE n")
-        tx.run(
-            """
-            MATCH (r:Rule)
-            WHERE NOT r.id IN $rule_ids
-            DETACH DELETE r
+            MATCH (rd:RouteDecision {id: $decision_id})
+            OPTIONAL MATCH (rd)-[:HAS_ROUTING_FEATURE]->(rf:RoutingFeature)
+            OPTIONAL MATCH (rd)-[:INCLUDES_LAYER|EXCLUDES_LAYER]->(rl:RoutingLayer)
+            OPTIONAL MATCH (rd)-[:GENERATES_COST_SURFACE]->(cs:CostSurface)
+            DETACH DELETE rd, rf, rl, cs
             """,
-            rule_ids=rule_ids,
+            decision_id=decision_id,
         )
 
     @staticmethod
-    def _write_tower_sites(tx: Any, sites: list[TowerSite]) -> None:
+    def _write_route_decision_node(
+        tx: Any, decision_id: str, voltage_level: str,
+        stats: dict[str, Any],
+    ) -> None:
+        """写入走线决策节点。"""
+        now = datetime.now(timezone.utc).isoformat()
         tx.run(
             """
-            UNWIND $rows AS row
-            MERGE (n:TowerSite {id: row.id})
-            SET n += row
+            MERGE (rd:RouteDecision {id: $row.id})
+            SET rd.voltage_level = $row.voltage_level,
+                rd.total_features = $row.total_features,
+                rd.forbidden_count = $row.forbidden_count,
+                rd.cost_count = $row.cost_count,
+                rd.rule_count = $row.rule_count,
+                rd.created_at = $row.created_at
             """,
-            rows=[prepare_node_props(site.model_dump()) for site in sites],
+            row={
+                "id": decision_id,
+                "voltage_level": voltage_level,
+                "total_features": stats["total_features"],
+                "forbidden_count": stats["forbidden_count"],
+                "cost_count": stats["cost_count"],
+                "rule_count": stats["rule_count"],
+                "created_at": now,
+            },
         )
 
     @staticmethod
-    def _write_line_segments(tx: Any, segments: list[LineSegment]) -> None:
-        tx.run(
-            """
-            UNWIND $rows AS row
-            MERGE (n:LineSegment {id: row.id})
-            SET n += row
-            """,
-            rows=[prepare_node_props(segment.model_dump()) for segment in segments],
-        )
-
-    @staticmethod
-    def _write_features(tx: Any, features: list[GeoFeature]) -> None:
-        tx.run(
-            """
-            UNWIND $rows AS row
-            MERGE (n:GeoFeature {id: row.id})
-            SET n += row
-            """,
-            rows=[prepare_node_props(feature.model_dump()) for feature in features],
-        )
-
-    @staticmethod
-    def _write_rules(tx: Any, rules: list[Rule]) -> None:
-        rows = []
-        for rule in rules:
-            label = "ConstraintRule" if rule.is_constraint else "CostRule"
-            row = rule.model_dump(mode="json")
+    def _write_cost_rule_entries_from_dicts(
+        tx: Any, entries: list[dict[str, Any]],
+    ) -> None:
+        """从字典列表写入 CostRule 节点。"""
+        for entry in entries:
+            row = dict(entry)
+            match_json = row.pop("match_condition_json", {})
+            row["match_condition_json"] = (
+                json.dumps(match_json, ensure_ascii=False) if match_json else None
+            )
+            raw = row.pop("raw_value", None)
+            if raw is not None:
+                row["raw_value"] = str(raw)
             row["id"] = row.pop("rule_id")
-            row["name"] = row.get("rule_name")
-            row["match_condition_json"] = json.dumps(row["match_condition_json"], ensure_ascii=False)
-            row["_label"] = label
-            rows.append(row)
-        for row in rows:
-            label = row.pop("_label")
             tx.run(
-                f"""
-                MERGE (n:Rule:{label} {{id: $row.id}})
-                SET n += $row
+                """
+                MERGE (cr:CostRule {id: $row.id})
+                SET cr += $row
                 """,
                 row=row,
             )
 
     @staticmethod
-    def _write_rule_conditions(tx: Any, rules: list[Rule]) -> None:
-        condition_rows: list[dict[str, Any]] = []
-        condition_rels: list[dict[str, Any]] = []
-        root_rels: list[dict[str, str]] = []
-        for rule in rules:
-            root_id = condition_node_id(rule.rule_id, "root")
-            root_rels.append({"rule_id": rule.rule_id, "condition_id": root_id})
-            append_condition_rows(
-                condition=rule.match_condition_json,
-                rule_id=rule.rule_id,
-                path="root",
-                rows=condition_rows,
-                rels=condition_rels,
-            )
-        tx.run(
-            """
-            UNWIND $rows AS row
-            MERGE (c:Condition {id: row.id})
-            SET c += row
-            """,
-            rows=condition_rows,
-        )
-        tx.run(
-            """
-            UNWIND $rows AS row
-            MATCH (r:Rule {id: row.rule_id})
-            MATCH (c:Condition {id: row.condition_id})
-            MERGE (r)-[:HAS_CONDITION]->(c)
-            """,
-            rows=root_rels,
-        )
-        tx.run(
-            """
-            UNWIND $rows AS row
-            MATCH (parent:Condition {id: row.parent_id})
-            MATCH (child:Condition {id: row.child_id})
-            MERGE (parent)-[rel:HAS_SUB_CONDITION]->(child)
-            SET rel.order = row.order
-            """,
-            rows=condition_rels,
-        )
+    def _write_routing_features(
+        tx: Any, features: list[dict[str, Any]], decision_id: str,
+    ) -> None:
+        """写入 RoutingFeature 节点及其与 CostRule 的关系。"""
+        for feat in features:
+            row = dict(feat)
+            source_feat_id = row.pop("id")
+            route_feature_id = f"{decision_id}:{source_feat_id}"
+            rule_id = row.get("rule_id")
 
-    @staticmethod
-    def _write_rule_metadata_relationships(tx: Any, rules: list[Rule]) -> None:
-        target_rows = sorted({rule.effect_target.value for rule in rules})
-        field_rows = sorted({field for rule in rules for field in collect_condition_fields(rule.match_condition_json)})
-        cost_factor_rows = []
-        rule_target_rels = []
-        rule_field_rels = []
-        rule_factor_rels = []
-        seen_factors: set[str] = set()
-        for rule in rules:
-            rule_target_rels.append({"rule_id": rule.rule_id, "target_id": rule.effect_target.value})
-            for field in collect_condition_fields(rule.match_condition_json):
-                rule_field_rels.append({"rule_id": rule.rule_id, "field_id": field})
-            if not rule.is_constraint:
-                factor_id = cost_factor_id(rule)
-                if factor_id not in seen_factors:
-                    seen_factors.add(factor_id)
-                    cost_factor_rows.append(
-                        {
-                            "id": factor_id,
-                            "calc_mode": rule.calc_mode.value,
-                            "effect_attr": rule.effect_attr,
-                            "name": f"{rule.calc_mode.value}:{rule.effect_attr or 'none'}",
-                        }
-                    )
-                rule_factor_rels.append({"rule_id": rule.rule_id, "factor_id": factor_id})
-        tx.run(
-            """
-            UNWIND $rows AS id
-            MERGE (target:EffectTarget {id: id})
-            SET target.name = id
-            """,
-            rows=target_rows,
-        )
-        tx.run(
-            """
-            UNWIND $rows AS id
-            MERGE (field:Field {id: id})
-            SET field.name = id
-            """,
-            rows=field_rows,
-        )
-        tx.run(
-            """
-            UNWIND $rows AS row
-            MERGE (factor:CostFactor {id: row.id})
-            SET factor += row
-            """,
-            rows=cost_factor_rows,
-        )
-        tx.run(
-            """
-            UNWIND $rows AS row
-            MATCH (rule:Rule {id: row.rule_id})
-            MATCH (target:EffectTarget {id: row.target_id})
-            MERGE (rule)-[:AFFECTS_TARGET]->(target)
-            """,
-            rows=rule_target_rels,
-        )
-        tx.run(
-            """
-            UNWIND $rows AS row
-            MATCH (rule:Rule {id: row.rule_id})
-            MATCH (field:Field {id: row.field_id})
-            MERGE (rule)-[:USES_FIELD]->(field)
-            """,
-            rows=rule_field_rels,
-        )
-        tx.run(
-            """
-            UNWIND $rows AS row
-            MATCH (rule:Rule {id: row.rule_id})
-            MATCH (factor:CostFactor {id: row.factor_id})
-            MERGE (rule)-[:HAS_COST_FACTOR]->(factor)
-            """,
-            rows=rule_factor_rels,
-        )
-
-    @staticmethod
-    def _write_base_cost_rules(tx: Any, base_cost_rules: list[dict[str, Any]]) -> None:
-        if not base_cost_rules:
-            return
-        tx.run(
-            """
-            UNWIND $rows AS row
-            MERGE (v:VoltageLevel {id: 'voltage_level:' + row.voltage_level})
-            SET v.name = row.voltage_level
-            MERGE (b:BaseCostRule {id: row.id})
-            SET b += row
-            MERGE (v)-[:HAS_BASE_COST]->(b)
-            """,
-            rows=base_cost_rules,
-        )
-
-    @staticmethod
-    def _write_segment_links(tx: Any, segments: list[LineSegment]) -> None:
-        tx.run(
-            """
-            UNWIND $rows AS row
-            MATCH (seg:LineSegment {id: row.id})
-            MATCH (start:TowerSite {id: row.start_site_id})
-            MATCH (end:TowerSite {id: row.end_site_id})
-            MERGE (seg)-[:STARTS_FROM]->(start)
-            MERGE (seg)-[:ENDS_AT]->(end)
-            MERGE (start)-[:CONNECTS_TO]->(end)
-            """,
-            rows=[segment.model_dump() for segment in segments],
-        )
-
-    @staticmethod
-    def _write_spatial_relations(tx: Any, relations: list[SpatialRelation]) -> None:
-        for relation in relations:
-            rel_type = safe_rel_type(relation.relation.value)
-            props = dict(relation.properties)
-            props.update(relation.metadata)
             tx.run(
-                f"""
-                MATCH (source {{id: $source_id}})
-                MATCH (target {{id: $target_id}})
-                MERGE (source)-[r:{rel_type}]->(target)
-                SET r += $props
+                """
+                MERGE (rf:RoutingFeature {id: $route_feature_id})
+                SET rf += $props,
+                    rf.source_feature_id = $source_feat_id,
+                    rf.decision_id = $decision_id
                 """,
-                source_id=relation.source_id,
-                target_id=relation.target_id,
-                props=props,
-            )
-
-    @staticmethod
-    def _write_feature_rule_matches(tx: Any, report: EvaluationReport) -> None:
-        rows_by_key: dict[tuple[str, str], dict[str, Any]] = {}
-        for trigger in report.triggers:
-            key = (trigger.feature_id, trigger.rule_id)
-            row = rows_by_key.setdefault(
-                key,
-                {
-                    "feature_id": trigger.feature_id,
-                    "rule_id": trigger.rule_id,
-                    "relations": [],
-                    "subjects": [],
-                },
-            )
-            if trigger.relation.value not in row["relations"]:
-                row["relations"].append(trigger.relation.value)
-            if trigger.subject_id not in row["subjects"]:
-                row["subjects"].append(trigger.subject_id)
-        tx.run(
-            """
-            UNWIND $rows AS row
-            MATCH (feature:GeoFeature {id: row.feature_id})
-            MATCH (rule:Rule {id: row.rule_id})
-            MERGE (feature)-[r:MATCHES_RULE]->(rule)
-            SET r.relations = row.relations,
-                r.subjects = row.subjects,
-                r.match_count = size(row.subjects)
-            """,
-            rows=list(rows_by_key.values()),
-        )
-
-    @staticmethod
-    def _write_triggers(tx: Any, report: EvaluationReport) -> None:
-        for trigger in report.triggers:
-            rel_type = "TRIGGERS_CONSTRAINT" if trigger.calc_mode.value == "FORBIDDEN" else "TRIGGERS_COST_RULE"
-            row = trigger.model_dump(mode="json")
-            tx.run(
-                f"""
-                MATCH (subject {{id: $subject_id}})
-                MATCH (rule:Rule {{id: $rule_id}})
-                MERGE (subject)-[r:{rel_type}]->(rule)
-                SET r += $props
-                """,
-                subject_id=trigger.subject_id,
-                rule_id=trigger.rule_id,
+                route_feature_id=route_feature_id,
+                source_feat_id=source_feat_id,
+                decision_id=decision_id,
                 props=row,
             )
+
+            if rule_id:
+                tx.run(
+                    """
+                    MERGE (cr:CostRule {id: $rule_id})
+                    ON CREATE SET cr.rule_origin = 'source_fallback',
+                                 cr.enabled = false,
+                                 cr.rule_name = $row_rule_name,
+                                 cr.calc_mode = $row_calc_mode
+                    WITH cr
+                    MATCH (rf:RoutingFeature {id: $route_feature_id})
+                    MERGE (rf)-[:TRIGGERED_BY_RULE]->(cr)
+                    """,
+                    route_feature_id=route_feature_id,
+                    rule_id=rule_id,
+                    row_rule_name=row.get("rule_name", ""),
+                    row_calc_mode=row.get("calc_mode", ""),
+                )
+
+            tx.run(
+                """
+                MATCH (rd:RouteDecision {id: $decision_id})
+                MATCH (rf:RoutingFeature {id: $route_feature_id})
+                MERGE (rd)-[:HAS_ROUTING_FEATURE]->(rf)
+                """,
+                decision_id=decision_id,
+                route_feature_id=route_feature_id,
+            )
+
+    @staticmethod
+    def _write_route_cost_surface(
+        tx: Any, decision_id: str, metadata: dict[str, Any],
+    ) -> None:
+        """写入走线决策关联的成本面节点和图层关系。"""
+        surface_id = f"cost_surface:{decision_id}"
+        included = metadata.get("included_layers", [])
+        excluded = metadata.get("excluded_layers", [])
+        m_stats = metadata.get("stats", {})
+        row = {
+            "id": surface_id,
+            "run_id": decision_id,
+            "cost_surface_path": metadata.get("cost_surface_path", ""),
+            "blocked_mask_path": metadata.get("blocked_mask_path"),
+            "reason_code_path": metadata.get("reason_code_path"),
+            "metadata_path": metadata.get("_metadata_path", ""),
+            "resolution": metadata.get("resolution", 0.0),
+            "crs": metadata.get("crs", ""),
+            "generated_at": metadata.get(
+                "generated_at", datetime.now(timezone.utc).isoformat(),
+            ),
+        }
+        for key, val in m_stats.items():
+            row[f"stat_{key}"] = val
+        tx.run(
+            """
+            MERGE (cs:CostSurface {id: $row.id})
+            SET cs += $row
+            """,
+            row=row,
+        )
+        tx.run(
+            """
+            MATCH (rd:RouteDecision {id: $decision_id})
+            MATCH (cs:CostSurface {id: $surface_id})
+            MERGE (rd)-[:GENERATES_COST_SURFACE]->(cs)
+            """,
+            decision_id=decision_id,
+            surface_id=surface_id,
+        )
+        Neo4jWriter._write_route_routing_layers(
+            tx, decision_id, included, excluded,
+        )
+
+    # ── RuleSet 目录图谱层 ──────────────────────────────────────────────────
+
+    def write_rule_set_catalog(
+        self,
+        entries: list[dict[str, Any]],
+        voltage_level: str,
+        rule_set_version: str | None = None,
+        resolution: float | None = None,
+        calculation_crs: str | None = None,
+        base_cost: float | None = None,
+        included_layers: list[str] | None = None,
+        excluded_layers: list[str] | None = None,
+        rule_set_id: str | None = None,
+        raster_spec_id: str | None = None,
+    ) -> dict[str, Any]:
+        """写入 RuleSet 目录及关联的 RasterSpec 到 Neo4j。
+
+        图谱结构：
+          RuleSet -[:CONTAINS_RULE]-> CostRule
+          RuleSet -[:USES_RASTER_SPEC]-> RasterSpec
+          RasterSpec -[:INCLUDES_LAYER]-> RoutingLayer
+          RasterSpec -[:EXCLUDES_LAYER]-> RoutingLayer
+
+        参数：
+            entries: CostRuleEntry 字典列表。
+            voltage_level: 电压等级（如 "110kV"）。
+            rule_set_version: 规则集版本标签。
+            resolution: 栅格分辨率（米）。
+            calculation_crs: 目标投影坐标系。
+            base_cost: 基础走线成本。
+            included_layers: 参与栅格计算的图层名列表。
+            excluded_layers: 排除的图层名列表。
+            rule_set_id: 可选显式 RuleSet ID。
+            raster_spec_id: 可选显式 RasterSpec ID。
+
+        返回：
+            包含 rule_set_id、raster_spec_id、rule_count、voltage_level、rule_set_version 的字典。
+        """
+        from .cost_rule_loader import CostRuleEntry
+
+        now_iso = datetime.now(timezone.utc).isoformat()
+        version_tag = rule_set_version or datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+
+        rule_set_id = rule_set_id or f"ruleset:{voltage_level}:{version_tag}"
+        raster_spec_id = raster_spec_id or f"raster_spec:{voltage_level}:{version_tag}"
+
+        prep_entries = [
+            e if isinstance(e, dict)
+            else CostRuleEntry.model_validate(e).model_dump(mode="json")
+            for e in entries
+        ]
+
+        seen_ids: set[str] = set()
+        unique_entries: list[dict[str, Any]] = []
+        for e in prep_entries:
+            rid = e.get("rule_id", "")
+            if rid not in seen_ids:
+                seen_ids.add(rid)
+                unique_entries.append(e)
+
+        rule_ids = [e["rule_id"] for e in unique_entries]
+
+        logger.info(
+            "开始写入 RuleSet 目录图谱：rule_set_id=%s, raster_spec_id=%s, voltage_level=%s, version=%s, rule_count=%s",
+            rule_set_id,
+            raster_spec_id,
+            voltage_level,
+            version_tag,
+            len(unique_entries),
+        )
+
+        with self.driver.session(database=self.database) as session:
+            session.execute_write(self._write_rule_set_constraints)
+            session.execute_write(
+                self._write_rule_set_catalog_tx,
+                rule_set_id, voltage_level, version_tag,
+                raster_spec_id, resolution, calculation_crs, base_cost,
+                included_layers or [], excluded_layers or [],
+                unique_entries, rule_ids, now_iso,
+            )
+
+        logger.info(
+            "RuleSet 目录图谱写入完成：rule_set_id=%s, raster_spec_id=%s, rule_count=%s",
+            rule_set_id,
+            raster_spec_id,
+            len(unique_entries),
+        )
+        return {
+            "rule_set_id": rule_set_id,
+            "raster_spec_id": raster_spec_id,
+            "rule_count": len(unique_entries),
+            "voltage_level": voltage_level,
+            "rule_set_version": version_tag,
+        }
+
+    @staticmethod
+    def _write_rule_set_constraints(tx: Any) -> None:
+        """创建 RuleSet 目录图层的节点唯一性约束。"""
+        for stmt in [
+            "CREATE CONSTRAINT ruleset_id IF NOT EXISTS "
+            "FOR (n:RuleSet) REQUIRE n.id IS UNIQUE",
+            "CREATE CONSTRAINT rasterspec_id IF NOT EXISTS "
+            "FOR (n:RasterSpec) REQUIRE n.id IS UNIQUE",
+            "CREATE CONSTRAINT costrule_rid IF NOT EXISTS "
+            "FOR (n:CostRule) REQUIRE n.id IS UNIQUE",
+            "CREATE CONSTRAINT routing_layer_id IF NOT EXISTS "
+            "FOR (n:RoutingLayer) REQUIRE n.id IS UNIQUE",
+        ]:
+            tx.run(stmt)
+
+    @staticmethod
+    def _write_rule_set_catalog_tx(
+        tx: Any,
+        rule_set_id: str,
+        voltage_level: str,
+        version_tag: str,
+        raster_spec_id: str,
+        resolution: float | None,
+        calculation_crs: str | None,
+        base_cost: float | None,
+        included_layers: list[str],
+        excluded_layers: list[str],
+        entries: list[dict[str, Any]],
+        rule_ids: list[str],
+        now_iso: str,
+    ) -> None:
+        """在单事务内完成 RuleSet 目录的完整写入。"""
+        rs_props: dict[str, Any] = {
+            "id": rule_set_id,
+            "voltage_level": voltage_level,
+            "rule_set_version": version_tag,
+            "status": "active",
+            "total_rules": len(entries),
+            "generated_at": now_iso,
+        }
+        tx.run(
+            """
+            MERGE (rs:RuleSet {id: $props.id})
+            SET rs += $props
+            """,
+            props=rs_props,
+        )
+
+        for entry in entries:
+            row = dict(entry)
+            match_json = row.pop("match_condition_json", {})
+            row["match_condition_json"] = (
+                json.dumps(match_json, ensure_ascii=False) if match_json else None
+            )
+            raw = row.pop("raw_value", None)
+            if raw is not None:
+                row["raw_value"] = str(raw)
+            row["id"] = row.pop("rule_id")
+            tx.run(
+                """
+                MERGE (cr:CostRule {id: $row.id})
+                SET cr += $row
+                """,
+                row=row,
+            )
+            tx.run(
+                """
+                MATCH (rs:RuleSet {id: $rule_set_id})
+                MATCH (cr:CostRule {id: $rule_id})
+                MERGE (rs)-[:CONTAINS_RULE]->(cr)
+                """,
+                rule_set_id=rule_set_id,
+                rule_id=row["id"],
+            )
+
+        spec_props: dict[str, Any] = {
+            "id": raster_spec_id,
+            "resolution": resolution,
+            "base_cost": base_cost,
+            "calculation_crs": calculation_crs,
+            "crs": calculation_crs,
+            "voltage_level": voltage_level,
+            "generated_at": now_iso,
+        }
+        tx.run(
+            """
+            MERGE (spec:RasterSpec {id: $props.id})
+            SET spec += $props
+            """,
+            props=spec_props,
+        )
+        tx.run(
+            """
+            MATCH (rs:RuleSet {id: $rule_set_id})
+            MATCH (spec:RasterSpec {id: $raster_spec_id})
+            MERGE (rs)-[:USES_RASTER_SPEC]->(spec)
+            """,
+            rule_set_id=rule_set_id,
+            raster_spec_id=raster_spec_id,
+        )
+
+        for layer_name in included_layers:
+            layer_id = f"routing_layer:{layer_name}:{raster_spec_id}"
+            tx.run(
+                """
+                MERGE (rl:RoutingLayer {id: $layer_id})
+                SET rl.name = $layer_name
+                """,
+                layer_id=layer_id, layer_name=layer_name,
+            )
+            tx.run(
+                """
+                MATCH (spec:RasterSpec {id: $raster_spec_id})
+                MATCH (rl:RoutingLayer {id: $layer_id})
+                MERGE (spec)-[:INCLUDES_LAYER]->(rl)
+                """,
+                raster_spec_id=raster_spec_id, layer_id=layer_id,
+            )
+        for layer_name in excluded_layers:
+            layer_id = f"routing_layer:{layer_name}:{raster_spec_id}"
+            tx.run(
+                """
+                MERGE (rl:RoutingLayer {id: $layer_id})
+                SET rl.name = $layer_name
+                """,
+                layer_id=layer_id, layer_name=layer_name,
+            )
+            tx.run(
+                """
+                MATCH (spec:RasterSpec {id: $raster_spec_id})
+                MATCH (rl:RoutingLayer {id: $layer_id})
+                MERGE (spec)-[:EXCLUDES_LAYER]->(rl)
+                """,
+                raster_spec_id=raster_spec_id, layer_id=layer_id,
+            )
+
+    @staticmethod
+    def _write_route_routing_layers(
+        tx: Any, decision_id: str,
+        included: list[str], excluded: list[str],
+    ) -> None:
+        """为走线决策创建 RoutingLayer 节点和 INCLUDES_LAYER / EXCLUDES_LAYER 关系。"""
+        for layer_name in included:
+            layer_id = f"routing_layer:{layer_name}:{decision_id}"
+            tx.run(
+                """
+                MERGE (rl:RoutingLayer {id: $layer_id})
+                SET rl.name = $layer_name
+                """,
+                layer_id=layer_id, layer_name=layer_name,
+            )
+            tx.run(
+                """
+                MATCH (rd:RouteDecision {id: $decision_id})
+                MATCH (rl:RoutingLayer {id: $layer_id})
+                MERGE (rd)-[:INCLUDES_LAYER]->(rl)
+                """,
+                decision_id=decision_id, layer_id=layer_id,
+            )
+        for layer_name in excluded:
+            layer_id = f"routing_layer:{layer_name}:{decision_id}"
+            tx.run(
+                """
+                MERGE (rl:RoutingLayer {id: $layer_id})
+                SET rl.name = $layer_name
+                """,
+                layer_id=layer_id, layer_name=layer_name,
+            )
+            tx.run(
+                """
+                MATCH (rd:RouteDecision {id: $decision_id})
+                MATCH (rl:RoutingLayer {id: $layer_id})
+                MERGE (rd)-[:EXCLUDES_LAYER]->(rl)
+                """,
+                decision_id=decision_id, layer_id=layer_id,
+            )
+
+
+instrument_class_methods(Neo4jWriter, logger)

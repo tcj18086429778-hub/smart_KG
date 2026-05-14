@@ -7,11 +7,20 @@
     "LineSegment",
     "RouteScheme",
     "GeoFeature",
+    "Rule",
     "ConstraintRule",
     "CostRule",
     "BaseCostRule",
     "Condition",
-    "DataSource"
+    "DataSource",
+    "Field",
+    "CostFactor",
+    "EffectTarget",
+    "CalculationRun",
+    "RouteDecision",
+    "RoutingFeature",
+    "RulePackage",
+    "CostSurface"
   ],
   "relationship_types": [
     "STARTS_FROM",
@@ -26,6 +35,15 @@
     "TRIGGERS_CONSTRAINT",
     "TRIGGERS_COST_RULE",
     "HAS_CONDITION",
-    "DERIVED_FROM"
+    "DERIVED_FROM",
+    "HAS_FEATURE",
+    "HAS_TOWER_SITE",
+    "HAS_LINE_SEGMENT",
+    "HAS_ROUTING_FEATURE",
+    "TRIGGERED_BY_RULE",
+    "GENERATES_RULE_PACKAGE",
+    "INCLUDES_RULE",
+    "GENERATES_COST_SURFACE",
+    "GENERATED_BY"
   ]
 }

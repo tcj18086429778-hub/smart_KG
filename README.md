@@ -1,21 +1,16 @@
 # smart_KG
 
-电塔选址统一知识图谱 MVP。当前版本先解决四件事：
+电塔选址知识图谱与成本栅格系统。当前主链路：
 
-- 接收已经算好的空间关系 `spatial_relations.json`。
-- 用结构化 `match_condition_json` 匹配地理要素和空间关系。
-- 输出塔位、线路段触发的硬约束、成本规则和解释链路。
-- 可选写入 Neo4j，未安装 Neo4j 时也能本地跑通 demo 和 API。
+- 从 Excel 分类体系提取标准化成本规则（`standardize-cost-rules`）
+- 对 GPKG 执行规则匹配与成本字段填充（`cost-gpkg` / `cost-gpkg-from-graph`）
+- 将成本化 GPKG 栅格化为成本面（`build-cost-raster` / `build-cost-raster-from-graph`）
+- 将规则集和栅格参数写入 Neo4j 图谱目录（`import-rule-set-neo4j` / `import-cost-rules-neo4j`）
+- 图谱驱动全链路管道（`run-route-pipeline-from-graph`）
 
 ## 1. 环境安装
 
-本机已验证的独立环境路径：
-
-```text
-D:\conda-envs\smart_kg
-```
-
-推荐使用 D 盘现有 Anaconda 创建独立沙箱：
+推荐使用 Anaconda 创建独立环境：
 
 ```powershell
 cd "C:\Users\11215\Desktop\知识图谱项目\smart_KG"
@@ -29,136 +24,113 @@ D:\conda-envs\smart_kg\python.exe -m pip install -e .[dev]
 conda activate "D:\conda-envs\smart_kg"
 ```
 
-也可以使用 `environment.yml` 创建默认命名环境：
+也可以使用 venv：
 
 ```powershell
-cd "C:\Users\11215\Desktop\知识图谱项目\smart_KG"
-conda env create -f environment.yml
-conda activate smart_kg
-```
-
-如果你使用 mamba：
-
-```powershell
-cd "C:\Users\11215\Desktop\知识图谱项目\smart_KG"
-mamba env create -f environment.yml
-conda activate smart_kg
-```
-
-如果 conda-forge 或 defaults 下载不稳定，可以用更保守的两步方式：
-
-```powershell
-cd "C:\Users\11215\Desktop\知识图谱项目\smart_KG"
-D:\Anaconda\Scripts\conda.exe create --prefix "D:\conda-envs\smart_kg" python=3.12 pip -y
-D:\conda-envs\smart_kg\python.exe -m pip install -e .[dev]
-```
-
-如果本机暂时没有 conda/mamba，也可以用 Python venv：
-
-```powershell
-cd "C:\Users\11215\Desktop\知识图谱项目\smart_KG"
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -U pip
 pip install -e .[dev]
 ```
 
-## 2. 运行 demo
+## 2. 主链路工作流
+
+### 2.1 从 Excel 提取成本规则
 
 ```powershell
-smart-kg demo
+smart-kg standardize-cost-rules --excel "选线数据分类体系20260422.xlsx" --out data/standardized/cost_rules_20260422.json
 ```
 
-未激活环境时可直接执行：
+### 2.2 GPKG 成本化
+
+文件驱动：
 
 ```powershell
-D:\conda-envs\smart_kg\python.exe -m smart_kg.cli demo
+smart-kg cost-gpkg --source-gpkg 上海_source.gpkg --out-gpkg data/standardized/上海_costed.gpkg --voltage-level 110kV --rules data/standardized/cost_rules_20260422.json
 ```
 
-该命令会读取：
+图谱驱动（从 Neo4j 读取活跃规则集）：
 
-- `configs/rules.json`
-- `data/raw/sample_geo_features.csv`
-- `data/raw/sample_tower_sites.csv`
-- `data/raw/sample_line_segments.csv`
-- `data/spatial_relations/sample_spatial_relations.json`
+```powershell
+smart-kg cost-gpkg-from-graph --source-gpkg 上海_source.gpkg --out-gpkg data/standardized/上海_costed.gpkg --voltage-level 110kV
+```
 
-并生成：
+### 2.3 构建成本栅格
 
-- `reports/demo_result.json`
+文件驱动：
 
-## 3. 启动 API
+```powershell
+smart-kg build-cost-raster --gpkg data/standardized/上海_costed.gpkg --out-dir exports/raster_route_eval/ --voltage-level 110kV --resolution 20
+```
+
+图谱驱动：
+
+```powershell
+smart-kg build-cost-raster-from-graph --gpkg data/standardized/上海_costed.gpkg --out-dir exports/raster_route_eval/ --voltage-level 110kV
+```
+
+### 2.4 导入 Neo4j 图谱
+
+导入 RuleSet 目录（推荐）：
+
+```powershell
+smart-kg import-rule-set-neo4j \
+  --rules data/standardized/cost_rules_20260422.json \
+  --voltage-level 110kV \
+  --rule-set-version 20260422 \
+  --resolution 20.0 \
+  --calculation-crs EPSG:4547 \
+  --base-cost 1.0 \
+  --included-layers "building,road,water,landuse" \
+  --excluded-layers "tower"
+```
+
+导入走线决策图谱：
+
+```powershell
+smart-kg import-cost-rules-neo4j \
+  --rules data/standardized/cost_rules_20260422.json \
+  --gpkg data/standardized/上海_costed.gpkg \
+  --voltage-level 110kV \
+  --metadata exports/raster_route_eval/metadata.json
+```
+
+查看 RuleSet 目录：
+
+```powershell
+smart-kg list-rule-sets
+smart-kg list-rule-sets --voltage-level 110kV
+```
+
+### 2.5 图谱驱动全链路
+
+一条命令完成 GPKG 成本化 + 栅格构建：
+
+```powershell
+smart-kg run-route-pipeline-from-graph \
+  --source-gpkg 上海_source.gpkg \
+  --out-gpkg data/standardized/上海_costed.gpkg \
+  --out-dir exports/raster_route_eval/ \
+  --voltage-level 110kV
+```
+
+## 3. API 服务
 
 ```powershell
 smart-kg serve --host 127.0.0.1 --port 8000
 ```
 
-未激活环境时可直接执行：
+可用端点：
 
-```powershell
-D:\conda-envs\smart_kg\python.exe -m smart_kg.cli serve --host 127.0.0.1 --port 8000
-```
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/health` | 健康检查 |
+| POST | `/cost-rules/standardize` | 成本规则标准化 |
+| POST | `/gpkg/cost-fields` | GPKG 成本字段补齐 |
+| POST | `/raster/cost-surface` | 成本栅格构建 |
 
-打开：
+## 4. Neo4j 配置
 
-- `http://127.0.0.1:8000/health`
-- `http://127.0.0.1:8000/evaluate`
-- `http://127.0.0.1:8000/explain/line-segment/line_segment:demo:A:B`
-- `http://127.0.0.1:8000/explain/tower-site/tower_site:demo:A`
-
-## 4. 从 Excel 生成标准规则
-
-当前 Excel 作为原始配置源，系统会把以下规则表清洗为结构化规则 JSON：
-
-- `BASE规则配置表`
-- `交跨成本对应表`
-- `地质气象条件成本对应表`
-- `高程成本对应表`
-
-按当前文件内容，清洗后会生成 105 条规则。
-
-```powershell
-smart-kg standardize-excel --excel "C:\Users\11215\Desktop\知识图谱项目\配置与示例GPKG.xlsx" --out data\standardized\rules_from_excel.json
-```
-
-未激活环境时可直接执行：
-
-```powershell
-D:\conda-envs\smart_kg\python.exe -m smart_kg.cli standardize-excel --excel "C:\Users\11215\Desktop\知识图谱项目\配置与示例GPKG.xlsx" --out data\standardized\rules_from_excel.json
-```
-
-说明：
-
-- `match_condition_raw` 保留 Excel 原始条件，便于追溯。
-- `match_condition_json` 是系统实际执行的结构化条件。
-- Excel 中 `ALL/TOWER/LINE` 会统一为 `BOTH/TOWER_SITE/LINE_SEGMENT`。
-- Excel 中 `S_TYPE_CODE/S_SUB_TYPE_CODE/S_LEVEL` 会统一映射到 `feature_type_code/feature_subtype_code/feature_level`。
-- `交跨成本对应表` 中不完整行和 `/` 成本行不会作为有效规则导入。
-- `?` 和 `-1` 会保留为 `NEGOTIABLE`，表示后续需要具体商议。
-
-## 5. 可选：导入 Neo4j
-
-本机已验证 Neo4j 安装路径：
-
-```text
-D:\Neo4j\neo4j-community-5.26.23
-```
-
-如果 Neo4j 没有作为 Windows 服务运行，可以这样启动：
-
-```powershell
-cd "D:\Neo4j\neo4j-community-5.26.23"
-.\bin\neo4j.bat console
-```
-
-先复制环境变量：
-
-```powershell
-copy .env.example .env
-notepad .env
-```
-
-确认 Neo4j 已启动，并设置：
+在项目根目录创建 `.env` 文件：
 
 ```text
 NEO4J_URI=bolt://localhost:7687
@@ -167,48 +139,63 @@ NEO4J_PASSWORD=你的密码
 NEO4J_DATABASE=neo4j
 ```
 
-然后执行：
+## 5. 清理旧版图谱
+
+如果 Neo4j 中存在旧版 `write_all` 工作流产生的节点（TowerSite、LineSegment、GeoFeature、Rule、Condition 等），可以使用维护命令清理：
 
 ```powershell
-smart-kg import-neo4j
+# 先预览将要删除的节点数量
+smart-kg cleanup-legacy-neo4j --dry-run
+
+# 确认后执行删除
+smart-kg cleanup-legacy-neo4j
 ```
 
-未激活环境时可直接执行：
+此命令不会触碰当前主链路使用的 RuleSet、RouteDecision、RasterSpec、CostRule、RoutingFeature、RoutingLayer、CostSurface 节点。
 
-```powershell
-$env:NEO4J_URI="bolt://localhost:7687"
-$env:NEO4J_USERNAME="neo4j"
-$env:NEO4J_PASSWORD="你的密码"
-$env:NEO4J_DATABASE="neo4j"
-D:\conda-envs\smart_kg\python.exe -m smart_kg.cli import-neo4j
-```
+## 6. 图谱结构
 
-或使用脚本：
+### RuleSet 目录层
 
-```powershell
-$env:NEO4J_PASSWORD="你的密码"
-powershell -ExecutionPolicy Bypass -File .\scripts\import_neo4j.ps1
-```
+| 节点 | 含义 |
+|------|------|
+| `RuleSet` | 版本化规则集目录 |
+| `CostRule` | 单条成本规则 |
+| `RasterSpec` | 栅格执行参数 |
+| `RoutingLayer` | 走线图层 |
 
-Neo4j 不是运行 demo 的前置条件。当前阶段建议先用 demo 和 API 验证规则模型，再接入数据库。
+关系：`CONTAINS_RULE`、`USES_RASTER_SPEC`、`INCLUDES_LAYER`、`EXCLUDES_LAYER`
 
-## 6. 项目结构
+### 走线决策图谱
+
+| 节点 | 含义 |
+|------|------|
+| `RouteDecision` | 一次走线决策 |
+| `CostRule` | 成本规则 |
+| `RoutingFeature` | 成本化 GPKG 要素 |
+| `CostSurface` | 栅格成本面元数据 |
+| `RoutingLayer` | 走线图层 |
+
+关系：`HAS_ROUTING_FEATURE`、`TRIGGERED_BY_RULE`、`GENERATES_COST_SURFACE`、`INCLUDES_LAYER`、`EXCLUDES_LAYER`
+
+## 7. 项目结构
 
 ```text
 smart_KG/
-├── configs/                    规则、schema、字段映射
+├── configs/                    规则 schema、字段映射
 ├── data/
-│   ├── raw/                    样例塔位、线路、地理要素
-│   ├── spatial_relations/      GIS 预处理输出
-│   ├── standardized/           Excel 清洗结果
-│   ├── validated/              校验通过的数据
-│   └── rejected/               校验失败的数据
+│   ├── raw/                    样例数据
+│   ├── standardized/           Excel 清洗结果、成本规则 JSON
+│   └── ...
 ├── docs/                       设计说明
-├── reports/                    demo 和评估报告
+├── exports/                    栅格输出
 ├── src/smart_kg/               Python 代码
+│   ├── cost_rule_loader.py     Excel → 标准化成本规则
+│   ├── gpkg_standardizer.py    GPKG 成本字段填充
+│   ├── raster_executor.py      成本栅格构建
+│   ├── graph_rule_source.py    Neo4j 图谱驱动规则读取
+│   ├── neo4j_writer.py         图谱写入（RouteDecision / RuleSet）
+│   ├── cli.py                  命令行入口
+│   └── api.py                  FastAPI 服务
 └── tests/                      单元测试
 ```
-
-## 7. 设计边界
-
-当前版本不做几何计算，不读取 GPKG 几何，不做候选点排序。GIS/空间预处理模块只需要按 `configs/spatial_relation_schema.json` 输出关系文件，smart_KG 负责规则触发、成本解释和图谱写入。

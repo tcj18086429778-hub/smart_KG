@@ -6,8 +6,11 @@ __pycache__/
 .mypy_cache/
 .env
 .venv/
+.claude/
+exports/
 reports/*.json
 reports/*.log
-exports/*.json
+docs/claude_handoff*.md
 data/validated/*.json
 data/rejected/*.json
+data/standardized/*_eval.json

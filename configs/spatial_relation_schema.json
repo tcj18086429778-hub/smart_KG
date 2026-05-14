@@ -5,6 +5,7 @@
   "required": ["source_type", "source_id", "relation", "target_type", "target_id", "properties", "metadata"],
   "properties": {
     "source_type": {"enum": ["TowerSite", "LineSegment", "GeoFeature"]},
+    "run_id": {"type": ["string", "null"]},
     "source_id": {"type": "string"},
     "relation": {"enum": ["LOCATED_IN", "INTERSECTS", "CROSSES", "DISTANCE_TO", "WITHIN_BUFFER", "OVERLAPS", "NEAR"]},
     "target_type": {"enum": ["TowerSite", "LineSegment", "GeoFeature"]},
